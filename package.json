@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Memory-based LFU cache",
   "license": "MIT",
-  "repository": "LevelFourAB/otter-js",
+  "repository": "aholstenson/transitory",
   "scripts": {
     "test": "node_modules/.bin/mocha test/**/*.test.js && node_modules/.bin/eslint .",
     "coverage": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec ./test/**/*.test.js"
