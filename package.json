@@ -1,0 +1,23 @@
+{
+  "name": "transitory",
+  "version": "0.1.0",
+  "description": "Memory-based LFU cache",
+  "license": "MIT",
+  "repository": "LevelFourAB/otter-js",
+  "scripts": {
+    "test": "node_modules/.bin/mocha test/**/*.test.js && node_modules/.bin/eslint .",
+    "coverage": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec ./test/**/*.test.js"
+  },
+  "main": "index.js",
+  "devDependencies": {
+    "chai": "^4.0.1",
+    "coveralls": "^2.13.1",
+    "eslint": "^3.19.0",
+    "eslint-plugin-node": "^5.0.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.4.2"
+  },
+  "dependencies": {
+    "hash-it": "^2.1.2"
+  }
+}
