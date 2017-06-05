@@ -70,7 +70,8 @@ class BoundedCache {
         node.append(data.window.head);
         data.window.size++;
 
-        // TODO: Should this register access to the item?
+        // Register access to the key
+        data.sketch.update(key);
 
         this[evict]();
 
@@ -78,12 +79,15 @@ class BoundedCache {
     }
 
     get(key) {
+        return this.getIfPresent(key);
+    }
+
+    getIfPresent(key) {
         const data = this[DATA];
 
         const node = data.values.get(key);
         if(! node) {
             // This value does not exist in the cache
-            // TODO: Should we register that we have accessed a non-existent node?
             return null;
         }
 
