@@ -47,7 +47,7 @@ Calls on the builder can be chained:
 transitory().withMaxSize(100).withLoading().build();
 ```
 
-# Limiting the size of a cache
+## Limiting the size of a cache
 
 Caches can be limited to a certain size. This type of cache will evict the
 least frequently used items when it reaches its maximum size.
@@ -97,7 +97,7 @@ API extensions for loading caches:
 * `cache.get(key): Promise` - `get` always returns a promise that will eventually resolve to the loaded value or fail
 * `cache.get(key, loader: Function): Promise` - provide a custom function that loads the value if needed, should return a Promise or a value. Example: `cache.get(500, key => key / 5)` would resolve to 100.
 
-# Removal listener
+## Removal listener
 
 Caches support a single removal listener that will be notified when items in
 the cache are removed.
