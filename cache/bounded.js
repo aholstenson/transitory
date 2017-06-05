@@ -45,8 +45,7 @@ class BoundedCache {
 
             // SLRU probation segment, 20% * 99% of the total cache
             probation: {
-                head: new Node(),
-                size: 0
+                head: new Node()
             }
         };
     }
@@ -124,6 +123,31 @@ class BoundedCache {
         }
 
         return node.value;
+    }
+
+    delete(key) {
+        const data = this[DATA];
+
+        const node = data.values.get(key);
+        if(node) {
+            node.remove();
+
+			switch(node.location) {
+				case PROTECTED:
+					data.protected.size--;
+					break;
+				case WINDOW:
+					data.window.size--;
+					break;
+			}
+
+            data.values.delete(key);
+        }
+    }
+
+    has(key) {
+        const data = this[DATA];
+        return data.values.has(key);
     }
 
     [evict]() {
