@@ -72,4 +72,6 @@ class Builder {
 
 module.exports = function() {
 	return new Builder();
-}
+};
+
+module.exports.RemovalCause = require('./utils/removal-cause');
