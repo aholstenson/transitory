@@ -3,6 +3,8 @@
 const BoundedCache = require('./cache/bounded');
 const BoundlessCache = require('./cache/boundless');
 
+const LoadingCache = require('./cache/loading');
+
 /**
  * Builder for cache instances.
  */
@@ -21,6 +23,16 @@ class Builder {
 	}
 
 	/**
+	 * Change to a loading cache, where the get-method will return instances
+	 * of Promise and automatically load unknown values.
+	 */
+	withLoading(loader) {
+		this.options.loading = true;
+		this.options.loader = loader;
+		return this;
+	}
+
+	/**
 	 * Build and return the cache.
 	 */
 	build() {
@@ -29,6 +41,10 @@ class Builder {
 			cache = new BoundedCache(this.options);
 		} else {
 			cache = new BoundlessCache();
+		}
+
+		if(this.options.loading) {
+			cache = new LoadingCache(cache, this.options);
 		}
 
 		return cache;
