@@ -10,7 +10,7 @@ const PROBATION = Symbol('probation');
 
 const CountMinSketch = require('../utils/sketch');
 
-const precentInMain = 0.99;
+const percentInMain = 0.99;
 const percentProtected = 0.8;
 
 /**
@@ -23,7 +23,7 @@ class BoundedCache {
     constructor(options) {
         this[maxSize] = options.maxSize;
 
-        const maxMain = Math.floor(precentInMain * options.maxSize);
+        const maxMain = Math.floor(percentInMain * options.maxSize);
         this[DATA] = {
             sketch: CountMinSketch.uint8(Math.floor(options.maxSize / 4) || 10, 4),
 
