@@ -50,37 +50,56 @@ class BoundedCache {
         };
     }
 
+	/**
+	 * Get the maximum size this cache can be.
+	 */
     get maxSize() {
         return this[maxSize];
     }
 
+	/**
+	 * Get the current size of the cache.
+	 */
     get size() {
         return this[DATA].values.size;
     }
 
+	/**
+	 * Cache and associate a value with the given key.
+	 */
     set(key, value) {
         const data = this[DATA];
 
         const old = data.values.get(key);
 
+		// Create a node and add it to the backing map
         const node = new Node(key, value);
         data.values.set(key, node);
 
+		// Append the new node to the window space
         node.append(data.window.head);
         data.window.size++;
 
         // Register access to the key
         data.sketch.update(key);
 
+		// Call evict to possibly evict an item
         this[evict]();
 
+		// Return the value we replaced
         return old ? old.value : null;
     }
 
+	/**
+	 * Get a previously cached value.
+	 */
     get(key) {
         return this.getIfPresent(key);
     }
 
+	/**
+	 * Get a value from this cache if it has been previously cached.
+	 */
     getIfPresent(key) {
         const data = this[DATA];
 
@@ -125,26 +144,36 @@ class BoundedCache {
         return node.value;
     }
 
+	/**
+	 * Delete any value associated with the given key from the cache.
+	 */
     delete(key) {
         const data = this[DATA];
 
         const node = data.values.get(key);
         if(node) {
+			// Remove the node from its current list
             node.remove();
 
 			switch(node.location) {
 				case PROTECTED:
+					// Node was protected, reduce the size
 					data.protected.size--;
 					break;
 				case WINDOW:
+					// Node was in window, reduce window size
 					data.window.size--;
 					break;
 			}
 
+			// Remove from main value storage
             data.values.delete(key);
         }
     }
 
+	/**
+	 * Check if a certain value exists in the cache.
+	 */
     has(key) {
         const data = this[DATA];
         return data.values.has(key);
