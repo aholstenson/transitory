@@ -38,6 +38,10 @@ This type of caches relies heavily on the use of promises.
 const cache = transitory()
 	.withLoading(key => loadSlowData(key))
 	.done();
+
+cache.get(781)
+	.then(data => handleLoadedData(data))
+	.catch(err => handleError(err));
 ```
 
 Loading caches can be combined with other things such as `withMaxSize`.
