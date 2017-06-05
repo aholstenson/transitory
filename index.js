@@ -1,6 +1,7 @@
 'use strict';
 
 const BoundedCache = require('./cache/bounded');
+const BoundlessCache = require('./cache/boundless');
 
 /**
  * Builder for cache instances.
@@ -23,11 +24,14 @@ class Builder {
 	 * Build and return the cache.
 	 */
 	build() {
-		if(! this.options.maxSize) {
-			throw new Error('Caches without maximum size are currently not supported');
+		let cache;
+		if(this.options.maxSize) {
+			cache = new BoundedCache(this.options);
+		} else {
+			cache = new BoundlessCache();
 		}
 
-		return new BoundedCache(this.options);
+		return cache;
 	}
 }
 
