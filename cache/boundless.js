@@ -2,6 +2,8 @@
 
 const DATA = Symbol('data');
 
+const RemovalCause = require('../utils/removal-cause');
+
 /**
  * Boundless cache.
  */
@@ -9,6 +11,8 @@ class BoundlessCache {
 	constructor(options) {
 		this[DATA] = {
 			values: new Map(),
+
+			removalListener: options.removalListener
 		};
 	}
 
@@ -38,7 +42,14 @@ class BoundlessCache {
 		data.values.set(key, value);
 
 		// Return the value we replaced
-		return old === undefined ? null : old;
+		if(old !== undefined) {
+			if(data.removalListener) {
+				data.removalListener(key, old, RemovalCause.REPLACED);
+			}
+			return old;
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -66,7 +77,14 @@ class BoundlessCache {
 		const old = data.values.get(key);
 		data.values.delete(key);
 
-		return old === undefined ? null : old;
+		if(old !== undefined) {
+			if(data.removalListener) {
+				data.removalListener(key, old, RemovalCause.EXPLICIT);
+			}
+			return old;
+		} else {
+			return null;
+		}
 	}
 
 	/**

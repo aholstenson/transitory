@@ -8,6 +8,7 @@ const WINDOW = Symbol('window');
 const PROTECTED = Symbol('protected');
 const PROBATION = Symbol('probation');
 
+const RemovalCause = require('../utils/removal-cause');
 const CountMinSketch = require('../utils/sketch');
 
 const percentInMain = 0.99;
@@ -25,6 +26,8 @@ class BoundedCache {
 
 		const maxMain = Math.floor(percentInMain * options.maxSize);
 		this[DATA] = {
+			removalListener: options.removalListener,
+
 			sketch: CountMinSketch.uint8(Math.floor(options.maxSize / 4) || 10, 4),
 
 			values: new Map(),
@@ -87,7 +90,14 @@ class BoundedCache {
 		this[evict]();
 
 		// Return the value we replaced
-		return old ? old.value : null;
+		if(old) {
+			if(data.removalListener) {
+				data.removalListener(key, old.value, RemovalCause.REPLACED);
+			}
+			return old.value;
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -169,6 +179,10 @@ class BoundedCache {
 			// Remove from main value storage
 			data.values.delete(key);
 
+			if(data.removalListener) {
+				data.removalListener(key, node.value, RemovalCause.EXPLICIT);
+			}
+
 			return node.value;
 		}
 
@@ -211,6 +225,10 @@ class BoundedCache {
 		const toRemove = freqFirst > freqProbation ? probation : first;
 		data.values.delete(toRemove.key);
 		toRemove.remove();
+
+		if(data.removalListener) {
+			data.removalListener(toRemove.key, toRemove.value, RemovalCause.SIZE);
+		}
 	}
 }
 

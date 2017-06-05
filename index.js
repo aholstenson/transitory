@@ -14,6 +14,15 @@ class Builder {
 	}
 
 	/**
+	 * Set a listener that will be called every time something is removed
+	 * from the cache.
+	 */
+	withRemovalListener(listener) {
+		this.options.removalListener = listener;
+		return this;
+	}
+
+	/**
 	 * Set the maximum number of items to keep in the cache before evicting
 	 * something.
 	 */
@@ -40,7 +49,7 @@ class Builder {
 		if(this.options.maxSize) {
 			cache = new BoundedCache(this.options);
 		} else {
-			cache = new BoundlessCache();
+			cache = new BoundlessCache(this.options);
 		}
 
 		if(this.options.loading) {
