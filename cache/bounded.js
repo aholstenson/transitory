@@ -168,7 +168,11 @@ class BoundedCache {
 
 			// Remove from main value storage
 			data.values.delete(key);
+
+			return node.value;
 		}
+
+		return null;
 	}
 
 	/**
