@@ -7,5 +7,5 @@ module.exports = Object.freeze({
 
 	SIZE: Symbol('size'),
 
-	EXPIRED: Symbol('time')
+	EXPIRED: Symbol('expired')
 });

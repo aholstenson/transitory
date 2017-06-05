@@ -15,7 +15,7 @@ class ExpireAfterWriteCache extends WrappingCache {
 		};
 
 		WrappingCache.rewireRemovalListener(this, (key, value, cause) => {
-			if(value.expires > Date.now()) {
+			if(value.expires <= Date.now()) {
 				cause = RemovalCause.EXPIRED;
 			}
 
