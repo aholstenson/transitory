@@ -1,6 +1,7 @@
 'use strict';
 
-const DATA = Symbol('data');
+const { DATA } = require('./symbols');
+
 const maxSize = Symbol('maxSize');
 const evict = Symbol('evict');
 
@@ -110,7 +111,7 @@ class BoundedCache {
 	/**
 	 * Get a value from this cache if it has been previously cached.
 	 */
-	getIfPresent(key) {
+	getIfPresent(key, recordStats=true) {
 		const data = this[DATA];
 
 		const node = data.values.get(key);
@@ -119,36 +120,38 @@ class BoundedCache {
 			return null;
 		}
 
-		// Register access to the key
-		data.sketch.update(key);
+		if(recordStats) {
+			// Register access to the key
+			data.sketch.update(key);
 
-		switch(node.location) {
-			case WINDOW:
-				// In window cache, marks a most recently used
-				node.move(data.window.head);
-				break;
-			case PROBATION:
-				// In SLRU probation segment, move to protected
-				node.location = PROTECTED;
-				node.move(data.protected.head);
+			switch(node.location) {
+				case WINDOW:
+					// In window cache, marks a most recently used
+					node.move(data.window.head);
+					break;
+				case PROBATION:
+					// In SLRU probation segment, move to protected
+					node.location = PROTECTED;
+					node.move(data.protected.head);
 
-				if(data.protected.size >= data.protected.maxSize) {
-					/*
-					 * There is now too many nodes in the protected segment
-					 * so demote the least recently used.
-					 */
-					const lru = data.protected.head.next;
-					lru.location = PROBATION;
-					lru.move(data.probation.head);
-				} else {
-					// Plenty of room, keep track of the size
-					data.protected.size++;
-				}
-				break;
-			case PROTECTED:
-				// SLRU protected segment, mark as most recently used
-				node.move(data.protected.head);
-				break;
+					if(data.protected.size >= data.protected.maxSize) {
+						/*
+						 * There is now too many nodes in the protected segment
+						 * so demote the least recently used.
+						 */
+						const lru = data.protected.head.next;
+						lru.location = PROBATION;
+						lru.move(data.probation.head);
+					} else {
+						// Plenty of room, keep track of the size
+						data.protected.size++;
+					}
+					break;
+				case PROTECTED:
+					// SLRU protected segment, mark as most recently used
+					node.move(data.protected.head);
+					break;
+			}
 		}
 
 		return node.value;

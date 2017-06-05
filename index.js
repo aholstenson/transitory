@@ -4,6 +4,7 @@ const BoundedCache = require('./cache/bounded');
 const BoundlessCache = require('./cache/boundless');
 
 const LoadingCache = require('./cache/loading');
+const ExpireAfterWriteCache = require('./cache/expire-after-write');
 
 /**
  * Builder for cache instances.
@@ -41,6 +42,11 @@ class Builder {
 		return this;
 	}
 
+    expireAfterWrite(time) {
+        this.options.maxWriteAge = time;
+        return this;
+    }
+
 	/**
 	 * Build and return the cache.
 	 */
@@ -51,6 +57,10 @@ class Builder {
 		} else {
 			cache = new BoundlessCache(this.options);
 		}
+
+        if(this.options.maxWriteAge > 0) {
+            cache = new ExpireAfterWriteCache(cache, this.options);
+        }
 
 		if(this.options.loading) {
 			cache = new LoadingCache(cache, this.options);

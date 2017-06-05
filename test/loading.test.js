@@ -3,7 +3,7 @@ const { expect } = require('chai');
 const BoundlessCache = require('../cache/boundless');
 const LoadingCache = require('../cache/loading');
 
-const newCache = loader => new LoadingCache(new BoundlessCache(), {
+const newCache = loader => new LoadingCache(new BoundlessCache({}), {
 	loader: loader
 });
 

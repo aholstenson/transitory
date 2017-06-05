@@ -1,6 +1,6 @@
 'use strict';
 
-const DATA = Symbol('data');
+const { DATA } = require('./symbols');
 
 const RemovalCause = require('../utils/removal-cause');
 
