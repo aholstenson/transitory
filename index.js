@@ -43,7 +43,15 @@ class Builder {
 	}
 
     expireAfterWrite(time) {
-        this.options.maxWriteAge = time;
+		let evaluator;
+		if(typeof time === 'function') {
+			evaluator = time;
+		} else if(typeof time === 'number') {
+			evaluator = () => time;
+		} else {
+			throw new Error('Expiration needs either a maximum age as a number or a function that returns a number');
+		}
+        this.options.maxWriteAge = evaluator;
         return this;
     }
 

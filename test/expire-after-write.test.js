@@ -5,7 +5,7 @@ const ExpireAfterWriteCache = require('../cache/expire-after-write');
 const RemovalCause = require('../utils/removal-cause');
 
 const newCache = (listener) => new ExpireAfterWriteCache(new BoundlessCache({}), {
-	maxWriteAge: 5,
+	maxWriteAge: () => 5,
 	removalListener: listener
 });
 

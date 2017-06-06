@@ -4,6 +4,10 @@ const { PARENT, DATA } = require('./symbols');
 const WrappingCache = require('./wrapping');
 const RemovalCause = require('../utils/removal-cause');
 
+/**
+ * Wrapper for another cache that provides lazily-evaluated eviction of items
+ * based on the time they were added to the cache.
+ */
 class ExpireAfterWriteCache extends WrappingCache {
 	constructor(parent, options) {
 		super(parent);
@@ -26,7 +30,7 @@ class ExpireAfterWriteCache extends WrappingCache {
 	set(key, value) {
 		const replaced = this[PARENT].set(key, {
 			value,
-			expires: Date.now() + this[DATA].maxWriteAge
+			expires: Date.now() + this[DATA].maxWriteAge(value)
 		});
 
 		return replaced ? replaced.value : null;
