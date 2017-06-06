@@ -11,6 +11,7 @@ const PROBATION = Symbol('probation');
 
 const RemovalCause = require('../utils/removal-cause');
 const CountMinSketch = require('../utils/sketch');
+const hashIt = require('hash-it');
 
 const percentInMain = 0.99;
 const percentProtected = 0.8;
@@ -85,7 +86,7 @@ class BoundedCache {
 		data.window.size++;
 
 		// Register access to the key
-		data.sketch.update(key);
+		data.sketch.update(node.hashCode);
 
 		// Call evict to possibly evict an item
 		this[evict]();
@@ -122,7 +123,7 @@ class BoundedCache {
 
 		if(recordStats) {
 			// Register access to the key
-			data.sketch.update(key);
+			data.sketch.update(node.hashCode);
 
 			switch(node.location) {
 				case WINDOW:
@@ -221,8 +222,8 @@ class BoundedCache {
 		const probation = data.probation.head.next;
 
 		// Estimate how often the two items have been accessed
-		const freqFirst = data.sketch.estimate(first.key);
-		const freqProbation = data.sketch.estimate(probation.key);
+		const freqFirst = data.sketch.estimate(first.hashCode);
+		const freqProbation = data.sketch.estimate(probation.hashCode);
 
 		// Remove item on probabiton if used less that newly evicted
 		const toRemove = freqFirst > freqProbation ? probation : first;
@@ -244,6 +245,7 @@ class Node {
 	constructor(key, value) {
 		this.key = key;
 		this.value = value;
+		this.hashCode = hashIt(key);
 
 		this.location = WINDOW;
 

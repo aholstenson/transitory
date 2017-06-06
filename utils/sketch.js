@@ -1,7 +1,5 @@
 'use strict';
 
-const hashIt = require('hash-it');
-
 function random() {
 	const max = 50000;
 	const min = 0;
@@ -30,13 +28,12 @@ module.exports = class CountMinSketch {
 
 	_findIndex(hashCode, d) {
 		let hash = hashCode * this._hashA[d];
-		return d * this._width + Math.abs(hash % this._width);
+		return d * this._width + hash % this._width;
 	}
 
-	update(key, valueToAdd=1) {
+	update(hashCode, valueToAdd=1) {
 		const table = this._table;
 		const maxSize = this._maxSize;
-		const hashCode = hashIt(key);
 
 		let added = false;
 		for(let i=0, n=this._depth; i<n; i++) {
@@ -55,9 +52,8 @@ module.exports = class CountMinSketch {
 		}
 	}
 
-	estimate(key) {
+	estimate(hashCode) {
 		const table = this._table;
-		const hashCode = hashIt(key);
 
 		let result = this._maxSize;
 		for(let i=0, n=this._depth; i<n; i++) {
