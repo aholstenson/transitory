@@ -1,6 +1,6 @@
 'use strict';
 
-const { DATA } = require('./symbols');
+const { PARENT, DATA } = require('./symbols');
 const WrappingCache = require('./wrapping');
 const RemovalCause = require('../utils/removal-cause');
 
@@ -24,7 +24,7 @@ class ExpireAfterWriteCache extends WrappingCache {
 	}
 
 	set(key, value) {
-		const replaced = super.set(key, {
+		const replaced = this[PARENT].set(key, {
 			value,
 			expires: Date.now() + this[DATA].maxWriteAge
 		});
@@ -33,19 +33,19 @@ class ExpireAfterWriteCache extends WrappingCache {
 	}
 
 	get(key) {
-		return this.getIfPresent(key);
+		return this.getIfPresent(key, true);
 	}
 
-	getIfPresent(key) {
+	getIfPresent(key, recordStats=true) {
 		if(this.has(key)) {
-			return super.getIfPresent(key, true).value;
+			return this[PARENT].getIfPresent(key, recordStats).value;
 		} else {
 			return null;
 		}
 	}
 
 	has(key) {
-		const data = super.getIfPresent(key, false);
+		const data = this[PARENT].getIfPresent(key, false);
 		return data && data.expires > Date.now();
 	}
 }

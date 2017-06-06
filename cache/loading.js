@@ -2,8 +2,7 @@
 
 const WrappingCache = require('./wrapping');
 
-const PARENT = WrappingCache.PARENT;
-const DATA = Symbol('data');
+const { PARENT, DATA } = require('./symbols');
 
 const NOOP = () => null;
 
