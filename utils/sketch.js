@@ -27,7 +27,7 @@ module.exports = class CountMinSketch {
 	}
 
 	_findIndex(hashCode, d) {
-		let hash = hashCode * this._hashA[d];
+		const hash = hashCode + this._hashA[d];
 		return d * this._width + hash % this._width;
 	}
 
