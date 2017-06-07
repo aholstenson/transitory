@@ -120,6 +120,32 @@ describe('BoundedCache', function() {
 			});
 		});
 	});
+
+	describe('Weighted', function() {
+		it('Can set', function() {
+			const cache = new BoundedCache({
+				maxSize: 50,
+				weigher: (key, value) => 2
+			});
+			cache.set('key', 'value');
+
+			expect(cache.has('key')).to.equal(true);
+			expect(cache.get('key')).to.equal('value');
+		});
+
+		it('Does not exceed maxSize', function() {
+			const cache = new BoundedCache({
+				maxSize: 50,
+				weigher: (key, value) => 10
+			});
+
+			for(let i=0; i<6; i++) {
+				cache.set(i, i);
+			}
+
+			expect(cache.size).to.equal(5);
+		});
+	})
 });
 
 function removalListener() {

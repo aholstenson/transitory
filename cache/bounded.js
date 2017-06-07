@@ -30,6 +30,9 @@ class BoundedCache {
 		this[DATA] = {
 			removalListener: options.removalListener,
 
+			weigher: options.weigher,
+			weightedSize: 0,
+
 			sketch: CountMinSketch.uint8(Math.floor(options.maxSize / 4) || 10, 4),
 
 			values: new Map(),
@@ -80,6 +83,12 @@ class BoundedCache {
 		// Create a node and add it to the backing map
 		const node = new Node(key, value);
 		data.values.set(key, node);
+
+		if(data.weigher) {
+			node.weight = data.weigher(key, value);
+		}
+
+		data.weightedSize += node.weight;
 
 		// Append the new node to the window space
 		node.append(data.window.head);
@@ -217,7 +226,7 @@ class BoundedCache {
 		data.window.size--;
 
 		// Check if we should evict something from the entire cache
-		if(data.values.size <= this[maxSize]) return;
+		if(data.weightedSize <= this[maxSize]) return;
 
 		const probation = data.probation.head.next;
 
@@ -229,6 +238,7 @@ class BoundedCache {
 		const toRemove = freqFirst > freqProbation ? probation : first;
 		data.values.delete(toRemove.key);
 		toRemove.remove();
+		data.weightedSize -= toRemove.weight;
 
 		if(data.removalListener) {
 			data.removalListener(toRemove.key, toRemove.value, RemovalCause.SIZE);
@@ -246,6 +256,7 @@ class Node {
 		this.key = key;
 		this.value = value;
 		this.hashCode = hashIt(key);
+		this.weight = 1;
 
 		this.location = WINDOW;
 

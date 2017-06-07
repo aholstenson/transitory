@@ -58,6 +58,17 @@ const cache = transitory()
 	.build();
 ```
 
+It is also possible to change how the size of each entry in the cache is
+calculated. This can be used to create a better cache if your entries vary in
+their size in memory.
+
+```javascript
+const cache = transitory()
+	.withMaxSize(100)
+	.withWeigher((key, value) => value.length)
+	.build();
+```
+
 ## Automatic expiry
 
 Limiting the maximum amount of time an entry can exist in the cache can be done

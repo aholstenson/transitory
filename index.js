@@ -11,7 +11,10 @@ const ExpireAfterWriteCache = require('./cache/expire-after-write');
  */
 class Builder {
 	constructor() {
-		this.options = {};
+		this.options = {
+            weigher: false,
+            removalListener: false
+        };
 	}
 
 	/**
@@ -31,6 +34,17 @@ class Builder {
 		this.options.maxSize = size;
 		return this;
 	}
+
+    /**
+     * Set a function to use to determine the size of a cached object.
+     */
+    withWeigher(weigher) {
+        if(typeof weigher !== 'function') {
+            throw new Error('Weigher should be a function that takes a key and value and returns a number');
+        }
+        this.options.weigher = weigher;
+        return this;
+    }
 
 	/**
 	 * Change to a loading cache, where the get-method will return instances
