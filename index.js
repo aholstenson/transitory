@@ -6,6 +6,8 @@ const BoundlessCache = require('./cache/boundless');
 const LoadingCache = require('./cache/loading');
 const ExpireAfterWriteCache = require('./cache/expire-after-write');
 
+const memoryEstimator = require('./utils/memoryEstimator');
+
 /**
  * Builder for cache instances.
  */
@@ -97,3 +99,4 @@ module.exports = function() {
 };
 
 module.exports.RemovalCause = require('./utils/removal-cause');
+module.exports.memoryUsageWeigher = (key, value) => memoryEstimator(value);

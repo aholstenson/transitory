@@ -64,8 +64,19 @@ their size in memory.
 
 ```javascript
 const cache = transitory()
-	.withMaxSize(100)
+	.withMaxSize(2000)
 	.withWeigher((key, value) => value.length)
+	.build();
+```
+
+The size of an entry is evaluated when it is added to the cache so weighing
+works best with immutable data. Transitory includes a weigher for estimated
+memory:
+
+```javascript
+const cache = transitory()
+	.withMaxSize(5242880)
+	.withWeigher(transitory.memoryUsageWeigher)
 	.build();
 ```
 
