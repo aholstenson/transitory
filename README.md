@@ -14,8 +14,8 @@ fast enough access.
 const transitory = require('transitory');
 
 const cache = transitory()
-	.withMaxSize(1000)
-	.build();
+  .maxSize(1000)
+  .build();
 
 cache.set('key', { value: 10 });
 
@@ -49,7 +49,7 @@ const builder = transitory();
 Calls on the builder can be chained:
 
 ```javascript
-transitory().withMaxSize(100).withLoading().build();
+transitory().maxSize(100).loading().build();
 ```
 
 ## Limiting the size of a cache
@@ -59,8 +59,8 @@ least frequently used items when it reaches its maximum size.
 
 ```javascript
 const cache = transitory()
-	.withMaxSize(100)
-	.build();
+  .maxSize(100)
+  .build();
 ```
 
 It is also possible to change how the size of each entry in the cache is
@@ -69,9 +69,9 @@ their size in memory.
 
 ```javascript
 const cache = transitory()
-	.withMaxSize(2000)
-	.withWeigher((key, value) => value.length)
-	.build();
+  .maxSize(2000)
+  .withWeigher((key, value) => value.length)
+  .build();
 ```
 
 The size of an entry is evaluated when it is added to the cache so weighing
@@ -80,23 +80,23 @@ memory:
 
 ```javascript
 const cache = transitory()
-	.withMaxSize(5242880)
-	.withWeigher(transitory.memoryUsageWeigher)
-	.build();
+  .maxSize(5242880)
+  .withWeigher(transitory.memoryUsageWeigher)
+  .build();
 ```
 
 ## Automatic expiry
 
 Limiting the maximum amount of time an entry can exist in the cache can be done
 by using `expireAfterWrite(timeInMs)`. For now its recommended to use this
-together with `withMaxSize` as removal is lazily executed when the cache is
+together with `maxSize` as removal is lazily executed when the cache is
 updated and needs to evict old data.
 
 ```javascript
 const cache = transitory()
-	.withMaxSize(100)
-	.expireAfterWrite(5000) // 5 seconds
-	.build();
+  .maxSize(100)
+  .expireAfterWrite(5000) // 5 seconds
+  .build();
 ```
 
 `expireAfterWrite` can also take a function that should return the maximum age
@@ -104,9 +104,9 @@ of the entry in milliseconds:
 
 ```javascript
 const cache = transitory()
-	.withMaxSize(100)
-	.expireAfterWrite((key, value) => 5000)
-	.build();
+  .maxSize(100)
+  .expireAfterWrite((key, value) => 5000)
+  .build();
 ```
 
 ## Loading caches
@@ -114,19 +114,35 @@ const cache = transitory()
 Caches can be made to automatically load values if they are not in the cache.
 This type of caches relies heavily on the use of promises.
 
+With a global loader:
+
 ```javascript
 const cache = transitory()
-	.withLoading(key => loadSlowData(key))
-	.done();
+  .withLoader(key => loadSlowData(key))
+  .done();
 
 cache.get(781)
-	.then(data => handleLoadedData(data))
-	.catch(err => handleError(err));
+  .then(data => handleLoadedData(data))
+  .catch(err => handleError(err));
+
+cache.get(1234, specialLoadingFunction)
 ```
 
-Loading caches can be combined with other things such as `withMaxSize`.
+Without a global loader:
 
-`withLoading` on the builder can be used with our without a function that loads
+```javascript
+const cache = transitory()
+  .loading()
+  .done();
+
+cache.get(781, key => loadSlowData(key))
+  .then(data => handleLoadedData(data))
+  .catch(err => handleError(err));
+```
+
+Loading caches can be combined with other things such as `maxSize`.
+
+`withLoader` on the builder can be used with our without a function that loads
 missing items. If provided the function may return a Promise or value.
 
 API extensions for loading caches:
@@ -142,21 +158,21 @@ the cache are removed.
 ```javascript
 const RemovalCause = transitory.RemovalCause;
 const cache = transitory()
-	.withRemovalListener((key, value, reason) => {
-		switch(reason) {
-			case RemovalCause.EXPLICIT:
-				// The user of the cache requested something to be removed
-				break;
-			case RemovalCause.REPLACED:
-				// A new value was loaded and this value was replaced
-				break;
-			case RemovalCause.SIZE:
-				// A value was evicted from the cache because the max size has been reached
-				break;
-			case RemovalCause.EXPIRED:
-				// A value was removed because it expired due to its autoSuggest
-				break;
-		}
-	})
-	.build();
+  .withRemovalListener((key, value, reason) => {
+    switch(reason) {
+      case RemovalCause.EXPLICIT:
+        // The user of the cache requested something to be removed
+        break;
+      case RemovalCause.REPLACED:
+        // A new value was loaded and this value was replaced
+        break;
+      case RemovalCause.SIZE:
+        // A value was evicted from the cache because the max size has been reached
+        break;
+      case RemovalCause.EXPIRED:
+        // A value was removed because it expired due to its autoSuggest
+        break;
+    }
+  })
+  .build();
 ```

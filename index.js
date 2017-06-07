@@ -32,7 +32,7 @@ class Builder {
 	 * Set the maximum number of items to keep in the cache before evicting
 	 * something.
 	 */
-	withMaxSize(size) {
+	maxSize(size) {
 		this.options.maxSize = size;
 		return this;
 	}
@@ -49,10 +49,19 @@ class Builder {
     }
 
 	/**
+	 * Change to a cache where get can also resolve values if provided with
+	 * a function as the second argument.
+	 */
+	loading() {
+		this.options.loading = true;
+		return this;
+	}
+
+	/**
 	 * Change to a loading cache, where the get-method will return instances
 	 * of Promise and automatically load unknown values.
 	 */
-	withLoading(loader) {
+	withLoadier(loader) {
 		this.options.loading = true;
 		this.options.loader = loader;
 		return this;
