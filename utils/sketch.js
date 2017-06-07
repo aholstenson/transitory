@@ -45,10 +45,8 @@ module.exports = class CountMinSketch {
 			}
 		}
 
-		if(added) {
-			if(++this._additions == this._resetAfter) {
-				this._performReset();
-			}
+		if(added && ++this._additions == this._resetAfter) {
+			this._performReset();
 		}
 	}
 
