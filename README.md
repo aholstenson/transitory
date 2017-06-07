@@ -1,5 +1,10 @@
 # Transitory
 
+[![npm version](https://badge.fury.io/js/transitory.svg)](https://badge.fury.io/js/transitory)
+[![Build Status](https://travis-ci.org/aholstenson/transitory.svg?branch=master)](https://travis-ci.org/aholstenson/transitory)
+[![Coverage Status](https://coveralls.io/repos/aholstenson/transitory/badge.svg)](https://coveralls.io/github/aholstenson/transitory)
+[![Dependencies](https://david-dm.org/aholstenson/transitory.svg)](https://david-dm.org/aholstenson/transitory)
+
 Transitory is a in-memory caching library for JavaScript. It provides a
 bounded cache that evicts the least frequently used items when the cache gets
 full. This library aims to provide caches that have a high hit rate with
