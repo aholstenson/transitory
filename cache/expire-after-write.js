@@ -1,34 +1,21 @@
 'use strict';
 
-const { PARENT, DATA } = require('./symbols');
-const WrappingCache = require('./wrapping');
+const { DATA, ON_REMOVE } = require('./symbols');
 const RemovalCause = require('../utils/removal-cause');
 
 /**
  * Wrapper for another cache that provides lazily-evaluated eviction of items
  * based on the time they were added to the cache.
  */
-class ExpireAfterWriteCache extends WrappingCache {
-	constructor(parent, options) {
-		super(parent);
+module.exports = ParentCache => class ExpireAfterWriteCache extends ParentCache {
+	constructor(options) {
+		super(options);
 
-		this[DATA] = {
-			removalListener: options.removalListener,
-
-			maxWriteAge: options.maxWriteAge
-		};
-
-		WrappingCache.rewireRemovalListener(this, (key, value, cause) => {
-			if(value.expires <= Date.now()) {
-				cause = RemovalCause.EXPIRED;
-			}
-
-			return { key, value: value.value, cause };
-		});
+		this[DATA].maxWriteAge = options.maxWriteAge;
 	}
 
 	set(key, value) {
-		const replaced = this[PARENT].set(key, {
+		const replaced = super.set(key, {
 			value,
 			expires: Date.now() + this[DATA].maxWriteAge(key, value)
 		});
@@ -42,16 +29,21 @@ class ExpireAfterWriteCache extends WrappingCache {
 
 	getIfPresent(key, recordStats=true) {
 		if(this.has(key)) {
-			return this[PARENT].getIfPresent(key, recordStats).value;
+			return super.getIfPresent(key, recordStats).value;
 		} else {
 			return null;
 		}
 	}
 
 	has(key) {
-		const data = this[PARENT].getIfPresent(key, false);
+		const data = super.getIfPresent(key, false);
 		return data && data.expires > Date.now();
 	}
-}
 
-module.exports = ExpireAfterWriteCache;
+	[ON_REMOVE](key, value, cause) {
+		if(value.expires <= Date.now()) {
+			cause = RemovalCause.EXPIRED;
+		}
+		super[ON_REMOVE](key, value.value, cause);
+	}
+};

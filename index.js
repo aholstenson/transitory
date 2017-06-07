@@ -75,22 +75,22 @@ class Builder {
 	 * Build and return the cache.
 	 */
 	build() {
-		let cache;
+		let Impl;
 		if(this.options.maxSize) {
-			cache = new BoundedCache(this.options);
+			Impl = BoundedCache;
 		} else {
-			cache = new BoundlessCache(this.options);
+			Impl = BoundlessCache;
 		}
 
         if(this.options.maxWriteAge > 0) {
-            cache = new ExpireAfterWriteCache(cache, this.options);
+			Impl = ExpireAfterWriteCache(Impl);
         }
 
 		if(this.options.loading) {
-			cache = new LoadingCache(cache, this.options);
+			Impl = LoadingCache(Impl);
 		}
 
-		return cache;
+		return new Impl(this.options);
 	}
 }
 

@@ -3,9 +3,12 @@ const { expect } = require('chai');
 const BoundlessCache = require('../cache/boundless');
 const LoadingCache = require('../cache/loading');
 
-const newCache = loader => new LoadingCache(new BoundlessCache({}), {
-	loader: loader
-});
+const newCache = loader => {
+	let Impl = LoadingCache(BoundlessCache);
+	return new Impl({
+		loader: loader
+	})
+};
 
 describe('LoadingCache', function() {
 	it('Can create', function() {

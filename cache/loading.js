@@ -1,28 +1,23 @@
 'use strict';
 
-const WrappingCache = require('./wrapping');
-
-const { PARENT, DATA } = require('./symbols');
+const { DATA } = require('./symbols');
 
 const NOOP = () => null;
 
 /**
  * Extension to another cache that will load items if they are not cached.
  */
-class LoadingCache extends WrappingCache {
-	constructor(parent, options) {
-		super(parent);
-		this[DATA] = {
-			promises: new Map(),
+module.exports = ParentCache => class LoadingCache extends ParentCache {
+	constructor(options) {
+		super(options);
 
-			loader: options.loader || NOOP
-		};
+		this[DATA].promises = new Map();
+		this[DATA].loader = options.loader || NOOP;
 	}
 
 	get(key, loader) {
-		const parent = this[PARENT];
-		if(parent.has(key)) {
-			return Promise.resolve(parent.getIfPresent(key));
+		if(this.has(key)) {
+			return Promise.resolve(this.getIfPresent(key));
 		}
 
 		const data = this[DATA];
@@ -42,9 +37,9 @@ class LoadingCache extends WrappingCache {
 		}
 
 		// Enhance with handler that will remove promise and set value if success
-		const resolve = () => this[DATA].promises.delete(key);
+		const resolve = () => data.promises.delete(key);
 		promise = promise.then(result => {
-			this[PARENT].set(key, result);
+			this.set(key, result);
 			resolve();
 			return result;
 		}).catch(err => {
@@ -55,6 +50,4 @@ class LoadingCache extends WrappingCache {
 		data.promises.set(key, promise);
 		return promise;
 	}
-}
-
-module.exports = LoadingCache;
+};

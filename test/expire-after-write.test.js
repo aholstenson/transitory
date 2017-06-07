@@ -4,10 +4,13 @@ const BoundlessCache = require('../cache/boundless');
 const ExpireAfterWriteCache = require('../cache/expire-after-write');
 const RemovalCause = require('../utils/removal-cause');
 
-const newCache = (listener) => new ExpireAfterWriteCache(new BoundlessCache({}), {
-	maxWriteAge: () => 5,
-	removalListener: listener
-});
+const newCache = (listener) => {
+	let Impl = ExpireAfterWriteCache(BoundlessCache);
+	return new Impl({
+		maxWriteAge: () => 5,
+		removalListener: listener
+	});
+};
 
 describe('ExpireAfterWriteCache', function() {
 	it('Can create', function() {

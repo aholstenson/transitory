@@ -1,6 +1,6 @@
 'use strict';
 
-const { DATA } = require('./symbols');
+const { DATA, ON_REMOVE } = require('./symbols');
 
 const maxSize = Symbol('maxSize');
 const evict = Symbol('evict');
@@ -102,9 +102,7 @@ class BoundedCache {
 
 		// Return the value we replaced
 		if(old) {
-			if(data.removalListener) {
-				data.removalListener(key, old.value, RemovalCause.REPLACED);
-			}
+			this[ON_REMOVE](key, old.value, RemovalCause.REPLACED);
 			return old.value;
 		} else {
 			return null;
@@ -193,7 +191,7 @@ class BoundedCache {
 			data.values.delete(key);
 
 			if(data.removalListener) {
-				data.removalListener(key, node.value, RemovalCause.EXPLICIT);
+				this[ON_REMOVE](key, node.value, RemovalCause.EXPLICIT);
 			}
 
 			return node.value;
@@ -208,6 +206,13 @@ class BoundedCache {
 	has(key) {
 		const data = this[DATA];
 		return data.values.has(key);
+	}
+
+	[ON_REMOVE](key, value, cause) {
+		const data = this[DATA];
+		if(data.removalListener) {
+			data.removalListener(key, value, cause);
+		}
 	}
 
 	[evict]() {
@@ -241,7 +246,7 @@ class BoundedCache {
 		data.weightedSize -= toRemove.weight;
 
 		if(data.removalListener) {
-			data.removalListener(toRemove.key, toRemove.value, RemovalCause.SIZE);
+			this[ON_REMOVE](toRemove.key, toRemove.value, RemovalCause.SIZE);
 		}
 	}
 }

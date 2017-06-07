@@ -1,6 +1,6 @@
 'use strict';
 
-const { DATA } = require('./symbols');
+const { DATA, ON_REMOVE } = require('./symbols');
 
 const RemovalCause = require('../utils/removal-cause');
 
@@ -43,9 +43,7 @@ class BoundlessCache {
 
 		// Return the value we replaced
 		if(old !== undefined) {
-			if(data.removalListener) {
-				data.removalListener(key, old, RemovalCause.REPLACED);
-			}
+			this[ON_REMOVE](key, old, RemovalCause.REPLACED);
 			return old;
 		} else {
 			return null;
@@ -78,9 +76,7 @@ class BoundlessCache {
 		data.values.delete(key);
 
 		if(old !== undefined) {
-			if(data.removalListener) {
-				data.removalListener(key, old, RemovalCause.EXPLICIT);
-			}
+			this[ON_REMOVE](key, old, RemovalCause.EXPLICIT);
 			return old;
 		} else {
 			return null;
@@ -93,6 +89,13 @@ class BoundlessCache {
 	has(key) {
 		const data = this[DATA];
 		return data.values.has(key);
+	}
+
+	[ON_REMOVE](key, value, cause) {
+		const data = this[DATA];
+		if(data.removalListener) {
+			data.removalListener(key, value, cause);
+		}
 	}
 }
 
