@@ -94,6 +94,16 @@ const cache = transitory()
 	.build();
 ```
 
+`expireAfterWrite` can also take a function that should return the maximum age
+of the entry in milliseconds:
+
+```javascript
+const cache = transitory()
+	.withMaxSize(100)
+	.expireAfterWrite((key, value) => 5000)
+	.build();
+```
+
 ## Loading caches
 
 Caches can be made to automatically load values if they are not in the cache.

@@ -30,7 +30,7 @@ class ExpireAfterWriteCache extends WrappingCache {
 	set(key, value) {
 		const replaced = this[PARENT].set(key, {
 			value,
-			expires: Date.now() + this[DATA].maxWriteAge(value)
+			expires: Date.now() + this[DATA].maxWriteAge(key, value)
 		});
 
 		return replaced ? replaced.value : null;
