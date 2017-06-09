@@ -174,7 +174,7 @@ class BoundedCache {
 					node.location = PROTECTED;
 					node.move(data.protected.head);
 
-					if(data.protected.size >= data.protected.maxSize) {
+					while(data.protected.size > data.protected.maxSize) {
 						/*
 						 * There is now too many nodes in the protected segment
 						 * so demote the least recently used.
@@ -183,10 +183,11 @@ class BoundedCache {
 						lru.location = PROBATION;
 						lru.move(data.probation.head);
 						data.protected.size -= lru.weight;
-					} else {
-						// Plenty of room, keep track of the size
-						data.protected.size += node.weight;
 					}
+
+					// Plenty of room, keep track of the size
+					data.protected.size += node.weight;
+
 					break;
 				case PROTECTED:
 					// SLRU protected segment, mark as most recently used
