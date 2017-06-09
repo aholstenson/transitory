@@ -337,8 +337,8 @@ class BoundedCache {
 		}
 
 		if(data.evictionTimeout) {
-			data.evictionTimeout = null;
 			clearTimeout(data.evictionTimeout);
+			data.evictionTimeout = null;
 		}
 	}
 
