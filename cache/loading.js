@@ -2,8 +2,6 @@
 
 const { DATA } = require('./symbols');
 
-const NOOP = () => null;
-
 /**
  * Extension to another cache that will load items if they are not cached.
  */
@@ -12,7 +10,7 @@ module.exports = ParentCache => class LoadingCache extends ParentCache {
 		super(options);
 
 		this[DATA].promises = new Map();
-		this[DATA].loader = options.loader || NOOP;
+		this[DATA].loader = options.loader;
 	}
 
 	get(key, loader) {
@@ -32,22 +30,26 @@ module.exports = ParentCache => class LoadingCache extends ParentCache {
 				throw new Error('If loader is used it must be a function that returns a value or a Promise')
 			}
 			promise = Promise.resolve(loader(key));
-		} else {
+		} else if(data.loader) {
 			promise = Promise.resolve(data.loader(key));
 		}
 
-		// Enhance with handler that will remove promise and set value if success
-		const resolve = () => data.promises.delete(key);
-		promise = promise.then(result => {
-			this.set(key, result);
-			resolve();
-			return result;
-		}).catch(err => {
-			resolve();
-			throw err;
-		});
+		if(promise) {
+			// Enhance with handler that will remove promise and set value if success
+			const resolve = () => data.promises.delete(key);
+			promise = promise.then(result => {
+				this.set(key, result);
+				resolve();
+				return result;
+			}).catch(err => {
+				resolve();
+				throw err;
+			});
 
-		data.promises.set(key, promise);
+			data.promises.set(key, promise);
+		} else {
+			promise = Promise.resolve(null);
+		}
 		return promise;
 	}
 };
