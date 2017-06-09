@@ -16,7 +16,7 @@ module.exports = class CountMinSketch {
 
 		// Track additions and when to reset
 		this._additions = 0;
-		this._resetAfter = width * 10;
+		this._resetAfter = width * depth * 10;
 
 		// Create the table to store data in
 		this._table = new array(width * depth);

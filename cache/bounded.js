@@ -17,6 +17,14 @@ const percentProtected = 0.8;
 const percentOverflow = 0.15;
 
 /**
+ * Get the width of the sketch by rounding to the nearest power of 2.
+ */
+function roundSketchSize(maxSize) {
+	const c = Math.floor(maxSize / 4) || 1;
+	return Math.pow(2, Math.ceil(Math.log(c) / Math.log(2)));
+}
+
+/**
  * Bounded cache implementation using W-TinyLFU to keep track of data.
  *
  * See https://arxiv.org/pdf/1512.00727.pdf for details about TinyLFU and
@@ -25,7 +33,7 @@ const percentOverflow = 0.15;
 class BoundedCache {
 	constructor(options) {
 		const maxMain = Math.floor(percentInMain * options.maxSize);
-		const sketchWidth = options.weigher ? 64 : Math.max(Math.ceil(options.maxSize / 4), 64);
+		const sketchWidth = options.weigher ? 256 : roundSketchSize(options.maxSize);
 		this[DATA] = {
 			maxSize: options.weigher ? -1 : options.maxSize,
 			removalListener: options.removalListener,
@@ -125,7 +133,7 @@ class BoundedCache {
 		data.sketch.update(node.hashCode);
 
 		// Schedule eviction
-		if(data.weightedSize > data.forceEvictionLimit) {
+		if(data.weightedSize >= data.forceEvictionLimit) {
 			this[evict]();
 		} else if(! data.evictionTimeout) {
 			data.evictionTimeout = setTimeout(() => this[evict](), data.evictionInterval);
@@ -133,7 +141,6 @@ class BoundedCache {
 
 		// Return the value we replaced
 		if(old) {
-
 			this[ON_REMOVE](key, old.value, RemovalCause.REPLACED);
 			return old.value;
 		} else {
