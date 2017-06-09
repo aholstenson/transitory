@@ -32,6 +32,25 @@ describe('BoundedCache', function() {
 		expect(cache.get('key')).to.equal(null);
 	});
 
+	it('Weighted size is correct', function() {
+		const cache = new BoundedCache({ maxSize: 50 });
+
+		expect(cache.weightedSize).to.equal(0);
+		expect(cache.maxSize).to.equal(50);
+
+		cache.set('key', 'value');
+		expect(cache.weightedSize).to.equal(1);
+
+		cache.set('key2', 'value');
+		expect(cache.weightedSize).to.equal(2);
+
+		cache.set('key', 'value');
+		expect(cache.weightedSize).to.equal(2);
+
+		cache.delete('key');
+		expect(cache.weightedSize).to.equal(1);
+	})
+
 	describe('Eviction', function() {
 		it('Does not exceed maxSize', function() {
 			const maxSize = 10;
