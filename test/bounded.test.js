@@ -41,6 +41,7 @@ describe('BoundedCache', function() {
 				cache.set(i, i);
 			}
 
+			cache.__await();
 			expect(cache.size).to.equal(maxSize);
 		});
 
@@ -56,6 +57,7 @@ describe('BoundedCache', function() {
 			cache.get(1);
 
 			cache.set(maxSize + 1);
+			cache.__await();
 
 			expect(cache.get(2)).to.equal(null);
 			expect(cache.get(1)).to.equal(1);
@@ -72,9 +74,11 @@ describe('BoundedCache', function() {
 			});
 
 			cache.set('one', 1234);
+			cache.__await();
 			expect(listener.removed).to.equal(null);
 
 			cache.delete('one');
+			cache.__await();
 			expect(listener.removed).to.deep.equal({
 				key: 'one',
 				value: 1234,
@@ -90,9 +94,11 @@ describe('BoundedCache', function() {
 			});
 
 			cache.set('one', 1234);
+			cache.__await();
 			expect(listener.removed).to.equal(null);
 
 			cache.set('one', 4321);
+			cache.__await();
 			expect(listener.removed).to.deep.equal({
 				key: 'one',
 				value: 1234,
@@ -110,9 +116,11 @@ describe('BoundedCache', function() {
 			for(let i=0; i<5; i++) {
 				cache.set(i, 1234);
 			}
+			cache.__await();
 			expect(listener.removed).to.equal(null);
 
 			cache.set(5, 1234);
+			cache.__await();
 			expect(listener.removed).to.deep.equal({
 				key: 4,
 				value: 1234,
@@ -143,6 +151,8 @@ describe('BoundedCache', function() {
 				cache.set(i, i);
 			}
 
+			cache.__await();
+
 			expect(cache.size).to.equal(5);
 		});
 
@@ -156,7 +166,9 @@ describe('BoundedCache', function() {
 				cache.set(i, i);
 			}
 
-			expect(cache.weightedSize).to.be.below(500);
+			cache.__await();
+
+			expect(cache.weightedSize).to.be.most(500);
 		});
 
 		it('Variable sizes with random access do not exceed maxSize', function() {
@@ -166,6 +178,8 @@ describe('BoundedCache', function() {
 			});
 
 			randomTrace(cache, 400, 5000);
+
+			cache.__await();
 
 			expect(cache.weightedSize).to.be.below(500);
 		});

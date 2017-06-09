@@ -14,6 +14,7 @@ const hashIt = require('hash-it');
 
 const percentInMain = 0.99;
 const percentProtected = 0.8;
+const percentOverflow = 0.15;
 
 /**
  * Bounded cache implementation using W-TinyLFU to keep track of data.
@@ -55,7 +56,14 @@ class BoundedCache {
 			// SLRU probation segment, 20% * 99% of the total cache
 			probation: {
 				head: new Node()
-			}
+			},
+
+			// Timeout used to schedule evictions
+			evictionTimeout: 0,
+			// The maximum size we can temporarily be grow before an eviction is forced
+			forceEvictionLimit: options.maxSize + Math.max(Math.floor(options.maxSize * percentOverflow), 5),
+			// The time to wait before an eviction is triggered by a set
+			evictionInterval: 5000
 		};
 	}
 
@@ -112,8 +120,12 @@ class BoundedCache {
 		// Register access to the key
 		data.sketch.update(node.hashCode);
 
-		// Call evict to possibly evict an item
-		this[evict]();
+		// Schedule eviction
+		if(data.weightedSize > data.forceEvictionLimit) {
+			this[evict]();
+		} else if(! data.evictionTimeout) {
+			data.evictionTimeout = setTimeout(() => this[evict](), data.evictionInterval);
+		}
 
 		// Return the value we replaced
 		if(old) {
@@ -287,6 +299,15 @@ class BoundedCache {
 
 			this[ON_REMOVE](toRemove.key, toRemove.value, RemovalCause.SIZE);
 		}
+
+		if(data.evictionTimeout) {
+			data.evictionTimeout = null;
+			clearTimeout(data.evictionTimeout);
+		}
+	}
+
+	__await() {
+		this[evict]();
 	}
 }
 
