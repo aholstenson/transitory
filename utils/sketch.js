@@ -4,15 +4,8 @@ function random() {
 	return (Math.floor(Math.random() * 30) << 1) | 1;
 }
 
-function toPowerOfN(n) {
-	return Math.pow(2, Math.ceil(Math.log(n) / Math.LN2));
-}
-
 module.exports = class CountMinSketch {
 	constructor(width, depth, array=Uint32Array) {
-		const cap = width * depth;
-		width = Math.max(toPowerOfN(width), 256);
-
 		this._width = width;
 		this._depth = depth;
 
@@ -21,7 +14,7 @@ module.exports = class CountMinSketch {
 
 		// Track additions and when to reset
 		this._additions = 0;
-		this._resetAfter = cap * 10;
+		this._resetAfter = width * depth * 10;
 
 		// Create the table to store data in
 		this._table = new array(width * depth);
@@ -29,10 +22,12 @@ module.exports = class CountMinSketch {
 		for(let i=0; i<depth; i++) {
 			this._hashA[i] = random();
 		}
+
 	}
 
 	_findIndex(hashCode, d) {
 		let hash = (hashCode * this._hashA[d]) & 0xFFFFFFFF;
+		hash += hash >>> 32;
 		return d * this._width + hash % this._width;
 	}
 
@@ -71,13 +66,11 @@ module.exports = class CountMinSketch {
 
 	_performReset() {
 		const table = this._table;
-		let count = 0;
+		this._additions /= 2;
 		for(let i=0, n=table.length; i<n; i++) {
-			if(table[i] % 2 == 1) count++;
-			table[i] = Math.floor(table[i] >>> 1);
+			this._additions -= table[i] & 1;
+			table[i] = Math.floor(table[i] / 2);
 		}
-
-		this._additions = this.additions / 2 + count / 2;
 	}
 
 	static uint32(width, depth) {

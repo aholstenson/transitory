@@ -16,6 +16,10 @@ const percentInMain = 0.99;
 const percentProtected = 0.8;
 const percentOverflow = 0.15;
 
+function toPowerOfN(n) {
+	return Math.pow(2, Math.ceil(Math.log(n) / Math.LN2));
+}
+
 /**
  * Bounded cache implementation using W-TinyLFU to keep track of data.
  *
@@ -25,7 +29,7 @@ const percentOverflow = 0.15;
 class BoundedCache {
 	constructor(options) {
 		const maxMain = Math.floor(percentInMain * options.maxSize);
-		const sketchWidth = options.weigher ? 256 : Math.floor(options.maxSize / 4);
+		const sketchWidth = options.weigher ? 256 : Math.max(toPowerOfN(Math.floor(options.maxSize / 4)), 256);
 		this[DATA] = {
 			maxSize: options.weigher ? -1 : options.maxSize,
 			removalListener: options.removalListener,
@@ -311,11 +315,10 @@ class BoundedCache {
 
 				if(freqEvicted > freqProbation) {
 					toRemove = probation;
-				} else if(freqEvicted == freqProbation) {
-					// Exactly the same count, remove something randomly
-					toRemove = Math.random() < 0.5 ? probation : evicted;
-				} else {
+				} else if(freqEvicted < 5) {
 					toRemove = evicted;
+				} else {
+					toRemove = Math.random() < 0.001 ? probation : evicted;
 				}
 
 				evictedToProbation--;
