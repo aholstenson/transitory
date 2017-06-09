@@ -189,6 +189,9 @@ class BoundedCache {
 					node.location = PROTECTED;
 					node.move(data.protected.head);
 
+					// Plenty of room, keep track of the size
+					data.protected.size += node.weight;
+
 					while(data.protected.size > data.protected.maxSize) {
 						/*
 						 * There is now too many nodes in the protected segment
@@ -199,9 +202,6 @@ class BoundedCache {
 						lru.move(data.probation.head);
 						data.protected.size -= lru.weight;
 					}
-
-					// Plenty of room, keep track of the size
-					data.protected.size += node.weight;
 
 					break;
 				case PROTECTED:
