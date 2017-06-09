@@ -5,10 +5,9 @@
 [![Coverage Status](https://coveralls.io/repos/aholstenson/transitory/badge.svg)](https://coveralls.io/github/aholstenson/transitory)
 [![Dependencies](https://david-dm.org/aholstenson/transitory.svg)](https://david-dm.org/aholstenson/transitory)
 
-Transitory is a in-memory caching library for JavaScript. It provides a
-bounded cache that evicts the least frequently used items when the cache gets
-full. This library aims to provide caches that have a high hit rate with
-fast enough access.
+Transitory is a in-memory caching library for JavaScript. Transitory provides
+caches with eviction based on frequency and recency, expiration and automatic
+loading.
 
 ```javascript
 const transitory = require('transitory');
@@ -21,6 +20,13 @@ cache.set('key', { value: 10 });
 
 const value = cache.get('key');
 ```
+
+## Performance
+
+The caches in this library are designed to have a high hit rate by evicting
+entries in the cache that are not frequently used. Transitory implements
+[W-TinyLFU](https://arxiv.org/abs/1512.00727) as its eviction policy which is
+a LFU policy that also gives high hit rates on many LRU workloads.
 
 ## Basic API
 
