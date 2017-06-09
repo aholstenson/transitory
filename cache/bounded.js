@@ -220,6 +220,9 @@ class BoundedCache {
 					break;
 			}
 
+			// Reduce overall weight
+			data.weightedSize -= node.weight;
+
 			// Remove from main value storage
 			data.values.delete(key);
 
