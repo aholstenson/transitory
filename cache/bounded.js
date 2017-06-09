@@ -104,7 +104,11 @@ class BoundedCache {
 			node.weight = data.weigher(key, value);
 		}
 
+		// Update our weight
 		data.weightedSize += node.weight;
+		if(old) {
+			data.weightedSize -= old.weight;
+		}
 
 		// Check if we reached the grow limit of the sketch
 		if(data.values.size >= data.sketchGrowLimit) {
@@ -129,7 +133,6 @@ class BoundedCache {
 
 		// Return the value we replaced
 		if(old) {
-			data.weightedSize -= old.weight;
 
 			this[ON_REMOVE](key, old.value, RemovalCause.REPLACED);
 			return old.value;
