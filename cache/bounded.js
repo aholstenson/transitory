@@ -190,9 +190,7 @@ class BoundedCache {
 			// Remove from main value storage
 			data.values.delete(key);
 
-			if(data.removalListener) {
-				this[ON_REMOVE](key, node.value, RemovalCause.EXPLICIT);
-			}
+			this[ON_REMOVE](key, node.value, RemovalCause.EXPLICIT);
 
 			return node.value;
 		}
@@ -245,9 +243,7 @@ class BoundedCache {
 		toRemove.remove();
 		data.weightedSize -= toRemove.weight;
 
-		if(data.removalListener) {
-			this[ON_REMOVE](toRemove.key, toRemove.value, RemovalCause.SIZE);
-		}
+		this[ON_REMOVE](toRemove.key, toRemove.value, RemovalCause.SIZE);
 	}
 }
 
