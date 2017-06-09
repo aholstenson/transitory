@@ -58,9 +58,9 @@ describe('BoundedCache', function() {
 
 			for(let i=0; i<maxSize*2; i++) {
 				cache.set(i, i);
+				cache.__await();
 			}
 
-			cache.__await();
 			expect(cache.size).to.equal(maxSize);
 		});
 
@@ -138,6 +138,11 @@ describe('BoundedCache', function() {
 			cache.__await();
 			expect(listener.removed).to.equal(null);
 
+			cache.get(0);
+			cache.get(1);
+			cache.get(2);
+			cache.get(3);
+
 			cache.set(5, 1234);
 			cache.__await();
 			expect(listener.removed).to.deep.equal({
@@ -200,7 +205,7 @@ describe('BoundedCache', function() {
 
 			cache.__await();
 
-			expect(cache.weightedSize).to.be.below(500);
+			expect(cache.weightedSize).to.be.most(500);
 		});
 	})
 });

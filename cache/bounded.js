@@ -293,8 +293,14 @@ class BoundedCache {
 				const freqEvicted = data.sketch.estimate(evicted.hashCode);
 				const freqProbation = data.sketch.estimate(probation.hashCode);
 
-				// Remove item on probation if used less that newly evicted
-				toRemove = freqEvicted > freqProbation ? probation : evicted;
+				if(freqEvicted > freqProbation) {
+					toRemove = probation;
+				} else if(freqEvicted == freqProbation) {
+					// Exactly the same count, remove something randomly
+					toRemove = Math.random() < 0.5 ? probation : evicted;
+				} else {
+					toRemove = evicted;
+				}
 
 				evictedToProbation--;
 			}
