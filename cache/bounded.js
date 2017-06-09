@@ -111,7 +111,7 @@ class BoundedCache {
 		}
 
 		// Check if we reached the grow limit of the sketch
-		if(data.values.size >= data.sketchGrowLimit) {
+		if(data.weighter && data.values.size >= data.sketchGrowLimit) {
 			const sketchWidth = data.values.width * 2;
 			data.sketch = CountMinSketch.uint8(sketchWidth, 4);
 			data.sketchGrowLimit = sketchWidth * 4;
