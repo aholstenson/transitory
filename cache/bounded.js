@@ -2,7 +2,6 @@
 
 const { DATA, ON_REMOVE } = require('./symbols');
 
-const maxSize = Symbol('maxSize');
 const evict = Symbol('evict');
 
 const WINDOW = Symbol('window');
@@ -24,16 +23,18 @@ const percentProtected = 0.8;
  */
 class BoundedCache {
 	constructor(options) {
-		this[maxSize] = options.maxSize;
-
 		const maxMain = Math.floor(percentInMain * options.maxSize);
+		const sketchWidth = options.weigher ? 64 : Math.max(Math.ceil(options.maxSize / 4), 64);
 		this[DATA] = {
+			maxSize: options.weigher ? -1 : options.maxSize,
 			removalListener: options.removalListener,
 
 			weigher: options.weigher,
+			weightedMaxSize: options.maxSize,
 			weightedSize: 0,
 
-			sketch: CountMinSketch.uint8(Math.floor(options.maxSize / 4) || 10, 4),
+			sketch: CountMinSketch.uint8(sketchWidth, 4),
+			sketchGrowLimit: sketchWidth * 4,
 
 			values: new Map(),
 
@@ -62,7 +63,7 @@ class BoundedCache {
 	 * Get the maximum size this cache can be.
 	 */
 	get maxSize() {
-		return this[maxSize];
+		return this[DATA].maxSize;
 	}
 
 	/**
@@ -70,6 +71,13 @@ class BoundedCache {
 	 */
 	get size() {
 		return this[DATA].values.size;
+	}
+
+	/**
+	 * Get the weighted size of all items in the cache.
+	 */
+	get weightedSize() {
+		return this[DATA].weightedSize;
 	}
 
 	/**
@@ -90,9 +98,16 @@ class BoundedCache {
 
 		data.weightedSize += node.weight;
 
+		// Check if we reached the grow limit of the sketch
+		if(data.values.size >= data.sketchGrowLimit) {
+			const sketchWidth = data.values.width * 2;
+			data.sketch = CountMinSketch.uint8(sketchWidth, 4);
+			data.sketchGrowLimit = sketchWidth * 4;
+		}
+
 		// Append the new node to the window space
 		node.append(data.window.head);
-		data.window.size++;
+		data.window.size += node.weight;
 
 		// Register access to the key
 		data.sketch.update(node.hashCode);
@@ -136,7 +151,7 @@ class BoundedCache {
 
 			switch(node.location) {
 				case WINDOW:
-					// In window cache, marks a most recently used
+					// In window cache, mark as most recently used
 					node.move(data.window.head);
 					break;
 				case PROBATION:
@@ -152,9 +167,10 @@ class BoundedCache {
 						const lru = data.protected.head.next;
 						lru.location = PROBATION;
 						lru.move(data.probation.head);
+						data.protected.size -= lru.weight;
 					} else {
 						// Plenty of room, keep track of the size
-						data.protected.size++;
+						data.protected.size += node.weight;
 					}
 					break;
 				case PROTECTED:
@@ -181,11 +197,11 @@ class BoundedCache {
 			switch(node.location) {
 				case PROTECTED:
 					// Node was protected, reduce the size
-					data.protected.size--;
+					data.protected.size -= node.weight;
 					break;
 				case WINDOW:
 					// Node was in window, reduce window size
-					data.window.size--;
+					data.window.size -= node.weight;
 					break;
 			}
 
@@ -217,35 +233,60 @@ class BoundedCache {
 
 	[evict]() {
 		const data = this[DATA];
-		if(data.window.size <= data.window.maxSize) return;
 
 		/*
-		 * Evict the least recently used item in the window space to the
-		 * probation segment.
+		* Evict the least recently used item in the window space to the
+		* probation segment until we are below the maximum size.
+		*/
+		let evictedToProbation = 0;
+		while(data.window.size > data.window.maxSize) {
+			const first = data.window.head.next;
+
+			first.move(data.probation.head);
+			first.location = PROBATION;
+
+			data.window.size -= first.weight;
+
+			evictedToProbation++;
+		}
+
+		/*
+		 * Evict items for real until we are below our maximum size.
 		 */
-		const first = data.window.head.next;
+		while(data.weightedSize > data.weightedMaxSize) {
+			const probation = data.probation.head.next;
+			const evicted = evictedToProbation == 0 ? null : data.probation.head.previous;
 
-		first.move(data.probation.head);
-		first.location = PROBATION;
+			const hasProbation = probation != data.probation.head;
+			const hasEvicted = evicted && evicted != data.probation.head;
 
-		data.window.size--;
+			let toRemove;
+			if(! hasProbation && ! hasEvicted) {
+				// TODO: Probation queue is empty, how is this handled?
+				break;
+			} else if(! hasEvicted) {
+				toRemove = probation;
+			} else if(! hasProbation) {
+				toRemove = evicted;
 
-		// Check if we should evict something from the entire cache
-		if(data.weightedSize <= this[maxSize]) return;
+				evictedToProbation--;
+			} else {
+				// Estimate how often the two items have been accessed
+				const freqEvicted = data.sketch.estimate(evicted.hashCode);
+				const freqProbation = data.sketch.estimate(probation.hashCode);
 
-		const probation = data.probation.head.next;
+				// Remove item on probation if used less that newly evicted
+				toRemove = freqEvicted > freqProbation ? probation : evicted;
 
-		// Estimate how often the two items have been accessed
-		const freqFirst = data.sketch.estimate(first.hashCode);
-		const freqProbation = data.sketch.estimate(probation.hashCode);
+				evictedToProbation--;
+			}
 
-		// Remove item on probabiton if used less that newly evicted
-		const toRemove = freqFirst > freqProbation ? probation : first;
-		data.values.delete(toRemove.key);
-		toRemove.remove();
-		data.weightedSize -= toRemove.weight;
+			data.values.delete(toRemove.key);
+			toRemove.remove();
+			data.weightedSize -= toRemove.weight;
 
-		this[ON_REMOVE](toRemove.key, toRemove.value, RemovalCause.SIZE);
+			this[ON_REMOVE](toRemove.key, toRemove.value, RemovalCause.SIZE);
+		}
 	}
 }
 

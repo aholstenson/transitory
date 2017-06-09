@@ -145,8 +145,42 @@ describe('BoundedCache', function() {
 
 			expect(cache.size).to.equal(5);
 		});
+
+		it('Variable sizes do not exceed maxSize', function() {
+			const cache = new BoundedCache({
+				maxSize: 500,
+				weigher: (key, value) => value
+			});
+
+			for(let i=0; i<500; i++) {
+				cache.set(i, i);
+			}
+
+			expect(cache.weightedSize).to.be.below(500);
+		});
+
+		it('Variable sizes with random access do not exceed maxSize', function() {
+			const cache = new BoundedCache({
+				maxSize: 500,
+				weigher: (key, value) => value
+			});
+
+			randomTrace(cache, 400, 5000);
+
+			expect(cache.weightedSize).to.be.below(500);
+		});
 	})
 });
+
+function randomTrace(cache, max, n) {
+	for(let i=0; i<n; i++) {
+		const id = Math.floor(Math.random() * max);
+		let c = cache.get(id);
+		if(c == null) {
+			cache.set(id, id);
+		}
+	}
+}
 
 function removalListener() {
 	let result = (key, value, reason) => {
