@@ -17,14 +17,6 @@ const percentProtected = 0.8;
 const percentOverflow = 0.15;
 
 /**
- * Get the width of the sketch by rounding to the nearest power of 2.
- */
-function roundSketchSize(maxSize) {
-	const c = Math.floor(maxSize / 4) || 4;
-	return Math.pow(2, Math.ceil(Math.log(c) / Math.log(2)));
-}
-
-/**
  * Bounded cache implementation using W-TinyLFU to keep track of data.
  *
  * See https://arxiv.org/pdf/1512.00727.pdf for details about TinyLFU and
@@ -33,7 +25,7 @@ function roundSketchSize(maxSize) {
 class BoundedCache {
 	constructor(options) {
 		const maxMain = Math.floor(percentInMain * options.maxSize);
-		const sketchWidth = options.weigher ? 256 : roundSketchSize(options.maxSize);
+		const sketchWidth = options.weigher ? 256 : Math.floor(options.maxSize / 4);
 		this[DATA] = {
 			maxSize: options.weigher ? -1 : options.maxSize,
 			removalListener: options.removalListener,
