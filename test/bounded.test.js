@@ -68,18 +68,18 @@ describe('BoundedCache', function() {
 			const maxSize = 3;
 			const cache = new BoundedCache({ maxSize });
 
-			for(let i=0; i<=maxSize; i++) {
+			for(let i=0; i<maxSize; i++) {
 				cache.set(i, i);
 			}
 
-			cache.get(3);
-			cache.get(1);
+			cache.get(0);
+			cache.get(2);
 
-			cache.set(maxSize + 1);
+			cache.set(maxSize, maxSize);
 			cache.__await();
 
-			expect(cache.get(2)).to.equal(null);
-			expect(cache.get(1)).to.equal(1);
+			expect(cache.get(1)).to.equal(null);
+			expect(cache.get(2)).to.equal(2);
 			expect(cache.get(3)).to.equal(3);
 		});
 	});

@@ -20,7 +20,7 @@ const percentOverflow = 0.15;
  * Get the width of the sketch by rounding to the nearest power of 2.
  */
 function roundSketchSize(maxSize) {
-	const c = Math.floor(maxSize / 4) || 1;
+	const c = Math.floor(maxSize / 4) || 4;
 	return Math.pow(2, Math.ceil(Math.log(c) / Math.log(2)));
 }
 
