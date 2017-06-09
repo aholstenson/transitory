@@ -115,7 +115,23 @@ class BoundedCache {
 		// Update our weight
 		data.weightedSize += node.weight;
 		if(old) {
+			// Remove the old node
+			old.remove();
+
+			// Ajudst weight
 			data.weightedSize -= old.weight;
+
+			// Update weights of where the node belonged
+			switch(old.location) {
+				case PROTECTED:
+					// Node was protected, reduce the size
+					data.protected.size -= old.weight;
+					break;
+				case WINDOW:
+					// Node was in window, reduce window size
+					data.window.size -= old.weight;
+					break;
+			}
 		}
 
 		// Check if we reached the grow limit of the sketch
