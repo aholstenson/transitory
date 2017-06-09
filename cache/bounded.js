@@ -102,6 +102,8 @@ class BoundedCache {
 
 		// Return the value we replaced
 		if(old) {
+			data.weightedSize -= old.weight;
+
 			this[ON_REMOVE](key, old.value, RemovalCause.REPLACED);
 			return old.value;
 		} else {
