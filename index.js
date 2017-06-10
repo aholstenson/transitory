@@ -15,9 +15,9 @@ const memoryEstimator = require('./utils/memoryEstimator');
 class Builder {
 	constructor() {
 		this.options = {
-            weigher: false,
-            removalListener: false
-        };
+			weigher: false,
+			removalListener: false
+		};
 	}
 
 	/**
@@ -38,16 +38,16 @@ class Builder {
 		return this;
 	}
 
-    /**
-     * Set a function to use to determine the size of a cached object.
-     */
-    withWeigher(weigher) {
-        if(typeof weigher !== 'function') {
-            throw new Error('Weigher should be a function that takes a key and value and returns a number');
-        }
-        this.options.weigher = weigher;
-        return this;
-    }
+	/**
+	 * Set a function to use to determine the size of a cached object.
+	 */
+	withWeigher(weigher) {
+		if(typeof weigher !== 'function') {
+			throw new Error('Weigher should be a function that takes a key and value and returns a number');
+		}
+		this.options.weigher = weigher;
+		return this;
+	}
 
 	/**
 	 * Change to a cache where get can also resolve values if provided with
@@ -71,7 +71,7 @@ class Builder {
 	/**
 	 * Set that the cache should expire items after some time.
 	 */
-    expireAfterWrite(time) {
+	expireAfterWrite(time) {
 		let evaluator;
 		if(typeof time === 'function') {
 			evaluator = time;
@@ -80,9 +80,9 @@ class Builder {
 		} else {
 			throw new Error('Expiration needs either a maximum age as a number or a function that returns a number');
 		}
-        this.options.maxWriteAge = evaluator;
-        return this;
-    }
+		this.options.maxWriteAge = evaluator;
+		return this;
+	}
 
 	/**
 	 * Activate tracking of metrics for this cache.
@@ -103,9 +103,9 @@ class Builder {
 			Impl = BoundlessCache;
 		}
 
-        if(this.options.maxWriteAge > 0) {
+		if(this.options.maxWriteAge > 0) {
 			Impl = ExpireAfterWriteCache(Impl);
-        }
+		}
 
 		if(this.options.metrics) {
 			Impl = MetricsCache(Impl);
