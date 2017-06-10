@@ -315,10 +315,8 @@ class BoundedCache {
 
 				if(freqEvicted > freqProbation) {
 					toRemove = probation;
-				} else if(freqEvicted < 5) {
-					toRemove = evicted;
 				} else {
-					toRemove = Math.random() < 0.001 ? probation : evicted;
+					toRemove = evicted;
 				}
 
 				evictedToProbation--;
