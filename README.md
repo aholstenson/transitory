@@ -157,6 +157,23 @@ API extensions for loading caches:
 * `cache.get(key): Promise` - `get` always returns a promise that will eventually resolve to the loaded value or fail
 * `cache.get(key, loader: Function): Promise` - provide a custom function that loads the value if needed, should return a Promise or a value. Example: `cache.get(500, key => key / 5)` would resolve to 100.
 
+## Metrics
+
+You can track the hit rate of the cache by activating support for metrics:
+
+```javascript
+const cache = transitory()
+  .metrics()
+  .done();
+
+const metrics = cache.metrics;
+
+console.log('hitRate=', metrics.hitRate);
+console.log('hits=', metrics.hits);
+console.log('misses=', metrics.misses);
+```
+
+
 ## Removal listener
 
 Caches support a single removal listener that will be notified when items in

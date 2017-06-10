@@ -5,6 +5,7 @@ const BoundlessCache = require('./cache/boundless');
 
 const LoadingCache = require('./cache/loading');
 const ExpireAfterWriteCache = require('./cache/expire-after-write');
+const MetricsCache = require('./cache/metrics');
 
 const memoryEstimator = require('./utils/memoryEstimator');
 
@@ -61,12 +62,15 @@ class Builder {
 	 * Change to a loading cache, where the get-method will return instances
 	 * of Promise and automatically load unknown values.
 	 */
-	withLoadier(loader) {
+	withLoader(loader) {
 		this.options.loading = true;
 		this.options.loader = loader;
 		return this;
 	}
 
+	/**
+	 * Set that the cache should expire items after some time.
+	 */
     expireAfterWrite(time) {
 		let evaluator;
 		if(typeof time === 'function') {
@@ -79,6 +83,14 @@ class Builder {
         this.options.maxWriteAge = evaluator;
         return this;
     }
+
+	/**
+	 * Activate tracking of metrics for this cache.
+	 */
+	metrics() {
+		this.options.metrics = true;
+		return this;
+	}
 
 	/**
 	 * Build and return the cache.
@@ -94,6 +106,10 @@ class Builder {
         if(this.options.maxWriteAge > 0) {
 			Impl = ExpireAfterWriteCache(Impl);
         }
+
+		if(this.options.metrics) {
+			Impl = MetricsCache(Impl);
+		}
 
 		if(this.options.loading) {
 			Impl = LoadingCache(Impl);
