@@ -9,7 +9,7 @@ function hash(key) {
 describe('CountMinSketch', function() {
 	describe('uint8', function() {
 		it('Update + estimate', function() {
-			const sketch = CountMinSketch.uint8(10, 4);
+			const sketch = CountMinSketch.uint8(5, 4);
 			sketch.update(hash('one'));
 			sketch.update(hash('two'), 5);
 
