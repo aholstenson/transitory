@@ -23,6 +23,5 @@
     "mocha": "^3.4.2"
   },
   "dependencies": {
-    "hash-it": "^2.1.2"
   }
 }

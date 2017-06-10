@@ -1,6 +1,6 @@
 'use strict';
 
-const hashIt = require('hash-it');
+const hashcode = require('./hashcode');
 
 function random() {
 	return (Math.floor((Math.random() * 30) << 1) | 1);
@@ -33,7 +33,6 @@ module.exports = class CountMinSketch {
 
 		// Create the table to store data in
 		this._table = new array(this._width * depth);
-		this.random = random();
 		this._hashA = new Uint32Array(depth);
 		for(let i=0; i<depth; i++) {
 			this._hashA[i] = random();
@@ -87,11 +86,7 @@ module.exports = class CountMinSketch {
 	}
 
 	static hash(key) {
-		// Hash the key and mix it around to improve the hashing quality
-		let hash = hashIt(key);
-		hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
-		hash = ((hash >> 16) ^ hash);
-		return hash;
+		return hashcode(key);
 	}
 
 	static uint32(width, depth) {

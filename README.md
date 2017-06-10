@@ -17,6 +17,7 @@ const cache = transitory()
   .build();
 
 cache.set('key', { value: 10 });
+cache.set(1234, 'any value');
 
 const value = cache.get('key');
 ```

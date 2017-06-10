@@ -1,7 +1,6 @@
 
 const { expect } = require('chai');
 const CountMinSketch = require('../utils/sketch');
-const hashIt = require('hash-it');
 
 function hash(key) {
 	return CountMinSketch.hash(key);
@@ -10,7 +9,7 @@ function hash(key) {
 describe('CountMinSketch', function() {
 	describe('uint8', function() {
 		it('Update + estimate', function() {
-			const sketch = CountMinSketch.uint8(5, 4);
+			const sketch = CountMinSketch.uint8(10, 4);
 			sketch.update(hash('one'));
 			sketch.update(hash('two'), 5);
 
@@ -32,12 +31,8 @@ describe('CountMinSketch', function() {
 			const current = sketch.estimate(hash(2));
 			sketch.update(hash(2));
 
-			console.log(current);
-
 			// Check that the value has been cut in half
 			const updated = sketch.estimate(hash(2));
-
-			console.log(updated);
 
 			expect(updated).to.be.within(Math.floor(current / 2), Math.ceil(current / 2));
 		});
