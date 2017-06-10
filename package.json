@@ -1,6 +1,6 @@
 {
   "name": "transitory",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "In-memory cache with LFU eviction, expiration, automatic loading and metrics",
   "license": "MIT",
   "repository": "aholstenson/transitory",
