@@ -6,8 +6,8 @@
 [![Dependencies](https://david-dm.org/aholstenson/transitory.svg)](https://david-dm.org/aholstenson/transitory)
 
 Transitory is a in-memory caching library for JavaScript. Transitory provides
-caches with eviction based on frequency and recency, expiration and automatic
-loading.
+caches with eviction based on frequency and recency, expiration, automatic
+loading and metrics.
 
 ```javascript
 const transitory = require('transitory');

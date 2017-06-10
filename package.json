@@ -1,7 +1,7 @@
 {
   "name": "transitory",
   "version": "0.5.1",
-  "description": "In-memory cache with LFU eviction, expiration and automatic loading",
+  "description": "In-memory cache with LFU eviction, expiration, automatic loading and metrics",
   "license": "MIT",
   "repository": "aholstenson/transitory",
   "scripts": {
@@ -12,7 +12,8 @@
   "keywords": [
     "cache",
     "caching",
-    "lfu"
+    "lfu",
+    "lru"
   ],
   "devDependencies": {
     "chai": "^4.0.1",
