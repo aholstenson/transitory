@@ -1,5 +1,7 @@
 'use strict';
 
+const hashIt = require('hash-it');
+
 function random() {
 	return (Math.floor((Math.random() * 30) << 1) | 1);
 }
@@ -82,6 +84,14 @@ module.exports = class CountMinSketch {
 			this._additions -= table[i] & 1;
 			table[i] = Math.floor(table[i] >>> 1);
 		}
+	}
+
+	static hash(key) {
+		// Hash the key and mix it around to improve the hashing quality
+		let hash = hashIt(key);
+		hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+		hash = ((hash >> 16) ^ hash);
+		return hash;
 	}
 
 	static uint32(width, depth) {

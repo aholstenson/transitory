@@ -3,14 +3,18 @@ const { expect } = require('chai');
 const CountMinSketch = require('../utils/sketch');
 const hashIt = require('hash-it');
 
+function hash(key) {
+	return CountMinSketch.hash(key);
+}
+
 describe('CountMinSketch', function() {
 	describe('uint8', function() {
 		it('Update + estimate', function() {
 			const sketch = CountMinSketch.uint8(5, 4);
-			sketch.update(hashIt('one'));
-			sketch.update(hashIt('two'), 5);
+			sketch.update(hash('one'));
+			sketch.update(hash('two'), 5);
 
-			expect(sketch.estimate(hashIt('two'))).to.equal(5);
+			expect(sketch.estimate(hash('two'))).to.equal(5);
 		});
 	});
 
@@ -21,17 +25,21 @@ describe('CountMinSketch', function() {
 
 			// Perform up to n-1 updates
 			for(let i=0; i<n-1; i++) {
-				sketch.update(hashIt(i % 10));
+				sketch.update(hash(i % 10));
 			}
 
 			// Perform one last update
-			const current = sketch.estimate(hashIt(2));
-			sketch.update(hashIt(2));
+			const current = sketch.estimate(hash(2));
+			sketch.update(hash(2));
+
+			console.log(current);
 
 			// Check that the value has been cut in half
-			const updated = sketch.estimate(hashIt(2));
+			const updated = sketch.estimate(hash(2));
 
-			expect(updated).to.equal(Math.floor(current / 2));
+			console.log(updated);
+
+			expect(updated).to.be.within(Math.floor(current / 2), Math.ceil(current / 2));
 		});
 	});
 });

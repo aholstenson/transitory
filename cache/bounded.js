@@ -10,7 +10,6 @@ const PROBATION = Symbol('probation');
 
 const RemovalCause = require('../utils/removal-cause');
 const CountMinSketch = require('../utils/sketch');
-const hashIt = require('hash-it');
 
 const percentInMain = 0.99;
 const percentProtected = 0.8;
@@ -354,18 +353,13 @@ class Node {
 	constructor(key, value) {
 		this.key = key;
 		this.value = value;
+		this.hashCode = CountMinSketch.hash(key);
 		this.weight = 1;
 
 		this.location = WINDOW;
 
 		this.previous = this;
 		this.next = this;
-
-		// Hash the key and mix it around to improve the hashing quality
-		let hash = hashIt(key);
-		hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
-		hash = ((hash >> 16) ^ hash);
-		this.hashCode = hash;
 	}
 
 	remove() {
