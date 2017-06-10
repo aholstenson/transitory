@@ -1,12 +1,25 @@
 'use strict';
 
 function random() {
-	return (Math.floor(Math.random() * 30) << 1) | 1;
+	return (Math.floor((Math.random() * 30) << 1) | 1);
 }
 
+function toPowerOfN(n) {
+	return Math.pow(2, Math.ceil(Math.log(n) / Math.LN2));
+}
+
+/**
+ * Count-min sketch suitable for use with W-TinyLFU. Similiar to a regular
+ * count-min sketch but with a few important differences to achieve better
+ * estimations:
+ *
+ * 1) Enforces that the width of the sketch is a power of 2.
+ * 2) Uses a reset that decays all values by half when width * 10 additions
+ *    have been made.
+ */
 module.exports = class CountMinSketch {
 	constructor(width, depth, array=Uint32Array) {
-		this._width = width;
+		this._width = toPowerOfN(width);
 		this._depth = depth;
 
 		// Get the maximum size of values, assuming unsigned ints
@@ -14,21 +27,20 @@ module.exports = class CountMinSketch {
 
 		// Track additions and when to reset
 		this._additions = 0;
-		this._resetAfter = width * depth * 10;
+		this._resetAfter = width * 10;
 
 		// Create the table to store data in
-		this._table = new array(width * depth);
-		this._hashA = new Uint8Array(depth);
+		this._table = new array(this._width * depth);
+		this.random = random();
+		this._hashA = new Uint32Array(depth);
 		for(let i=0; i<depth; i++) {
 			this._hashA[i] = random();
 		}
-
 	}
 
 	_findIndex(hashCode, d) {
-		let hash = (hashCode * this._hashA[d]) & 0xFFFFFFFF;
-		hash += hash >>> 32;
-		return d * this._width + hash % this._width;
+		hashCode *= this._hashA[d];
+		return d * this._width + hashCode % this._width;
 	}
 
 	update(hashCode, valueToAdd=1) {
@@ -52,7 +64,6 @@ module.exports = class CountMinSketch {
 
 	estimate(hashCode) {
 		const table = this._table;
-
 		let result = this._maxSize;
 		for(let i=0, n=this._depth; i<n; i++) {
 			const value = table[this._findIndex(hashCode, i)];
@@ -69,7 +80,7 @@ module.exports = class CountMinSketch {
 		this._additions /= 2;
 		for(let i=0, n=table.length; i<n; i++) {
 			this._additions -= table[i] & 1;
-			table[i] = Math.floor(table[i] / 2);
+			table[i] = Math.floor(table[i] >>> 1);
 		}
 	}
 

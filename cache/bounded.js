@@ -16,10 +16,6 @@ const percentInMain = 0.99;
 const percentProtected = 0.8;
 const percentOverflow = 0.15;
 
-function toPowerOfN(n) {
-	return Math.pow(2, Math.ceil(Math.log(n) / Math.LN2));
-}
-
 /**
  * Bounded cache implementation using W-TinyLFU to keep track of data.
  *
@@ -29,7 +25,16 @@ function toPowerOfN(n) {
 class BoundedCache {
 	constructor(options) {
 		const maxMain = Math.floor(percentInMain * options.maxSize);
-		const sketchWidth = options.weigher ? 256 : Math.max(toPowerOfN(Math.floor(options.maxSize / 4)), 256);
+
+		/*
+		 * For weighted caches use an initial sketch size of 256. It will
+		 * grow when the size of the cache approaches that size.
+		 *
+		 * Otherwise set it to a minimum of 128 or the maximum requested size
+		 * of the graph.
+		 */
+		const sketchWidth = options.weigher ? 256 : Math.max(options.maxSize, 128);
+
 		this[DATA] = {
 			maxSize: options.weigher ? -1 : options.maxSize,
 			removalListener: options.removalListener,
@@ -39,7 +44,7 @@ class BoundedCache {
 			weightedSize: 0,
 
 			sketch: CountMinSketch.uint8(sketchWidth, 4),
-			sketchGrowLimit: sketchWidth * 4,
+			sketchGrowLimit: sketchWidth,
 
 			values: new Map(),
 
@@ -134,7 +139,7 @@ class BoundedCache {
 		if(data.weigher && data.values.size >= data.sketchGrowLimit) {
 			const sketchWidth = data.values.size * 2;
 			data.sketch = CountMinSketch.uint8(sketchWidth, 4);
-			data.sketchGrowLimit = sketchWidth * 4;
+			data.sketchGrowLimit = sketchWidth;
 		}
 
 		// Append the new node to the window space
@@ -349,13 +354,18 @@ class Node {
 	constructor(key, value) {
 		this.key = key;
 		this.value = value;
-		this.hashCode = hashIt(key);
 		this.weight = 1;
 
 		this.location = WINDOW;
 
 		this.previous = this;
 		this.next = this;
+
+		// Hash the key and mix it around to improve the hashing quality
+		let hash = hashIt(key);
+		hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+		hash = ((hash >> 16) ^ hash);
+		this.hashCode = hash;
 	}
 
 	remove() {
