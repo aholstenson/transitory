@@ -6,6 +6,19 @@ function toPowerOfN(n) {
 	return Math.pow(2, Math.ceil(Math.log(n) / Math.LN2));
 }
 
+function hash2(a) {
+	a = (a ^ 61) ^ (a >>> 16);
+    a = a + (a << 3);
+    a = a ^ (a >>> 4);
+    a = safeishMultiply(a, 0x27d4eb2d);
+    a = a ^ (a >>> 15);
+	return a;
+}
+
+function safeishMultiply(a, b) {
+	return ((a & 0xffff) * b) + ((((a >>> 16) * b) & 0xffff) << 16);
+}
+
 /**
  * Count-min sketch suitable for use with W-TinyLFU. Similiar to a regular
  * count-min sketch but with a few important differences to achieve better
@@ -16,41 +29,40 @@ function toPowerOfN(n) {
  *    have been made.
  */
 module.exports = class CountMinSketch {
-	constructor(width, depth, array=Uint32Array) {
+	constructor(width, depth, decay) {
 		this._width = toPowerOfN(width);
 		this._depth = depth;
 
 		// Get the maximum size of values, assuming unsigned ints
-		this._maxSize = Math.pow(2, array.BYTES_PER_ELEMENT * 8);
+		this._maxSize = Math.pow(2, Uint8Array.BYTES_PER_ELEMENT * 8) - 1;
 
 		// Track additions and when to reset
 		this._additions = 0;
-		this._resetAfter = width * 10;
+		this._resetAfter = decay ? width * 10 : -1;
 
 		// Create the table to store data in
-		this._table = new array(this._width * depth);
+		this._table = new Uint8Array(this._width * depth);
+		this._random = Math.floor(Math.random() * 0xffffff) | 1;
 	}
 
-	_findIndex(h1, d) {
-		//let h = hashCode * this._hashA[d];
-		let h2 = ((h1 >> 16) ^ h1) * 0x45d9f3b;
-		h2 = ((h2 >> 16) ^ h2) * 0x45d9f3b;
-		h2 = ((h2 >> 16) ^ h2);
-
-		let h = h1 + h2 * d;
+	_findIndex(h1, h2, d) {
+		let h = h1 + safeishMultiply(h2, d);
 		return d * this._width + (h & (this._width - 1));
 	}
 
-	update(hashCode, valueToAdd=1) {
+	update(hashCode) {
 		const table = this._table;
 		const maxSize = this._maxSize;
 
+		const estimate = this.estimate(hashCode);
+
+		const h2 = hash2(hashCode);
 		let added = false;
 		for(let i=0, n=this._depth; i<n; i++) {
-			const idx = this._findIndex(hashCode, i);
+			const idx = this._findIndex(hashCode, h2, i);
 			const v = table[idx];
-			if(v < maxSize) {
-				table[idx] = Math.min(v + valueToAdd, maxSize);
+			if(v < maxSize && v === estimate) {
+				table[idx] = Math.min(v + 1, maxSize);
 				added = true;
 			}
 		}
@@ -62,9 +74,11 @@ module.exports = class CountMinSketch {
 
 	estimate(hashCode) {
 		const table = this._table;
+		const h2 = hash2(hashCode);
+
 		let result = this._maxSize;
 		for(let i=0, n=this._depth; i<n; i++) {
-			const value = table[this._findIndex(hashCode, i)];
+			const value = table[this._findIndex(hashCode, h2, i)];
 			if(value < result) {
 				result = value;
 			}
@@ -86,11 +100,7 @@ module.exports = class CountMinSketch {
 		return hashcode(key);
 	}
 
-	static uint32(width, depth) {
-		return new CountMinSketch(width, depth, Uint32Array);
-	}
-
-	static uint8(width, depth) {
-		return new CountMinSketch(width, depth, Uint8Array);
+	static uint8(width, depth, decay=true) {
+		return new CountMinSketch(width, depth, decay);
 	}
 }
