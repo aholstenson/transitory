@@ -13,7 +13,7 @@ const CountMinSketch = require('../utils/sketch');
 
 const percentInMain = 0.99;
 const percentProtected = 0.8;
-const percentOverflow = 0.15;
+const percentOverflow = 0.01;
 
 /**
  * Bounded cache implementation using W-TinyLFU to keep track of data.
