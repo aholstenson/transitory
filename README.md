@@ -27,7 +27,10 @@ const value = cache.get('key');
 The caches in this library are designed to have a high hit rate by evicting
 entries in the cache that are not frequently used. Transitory implements
 [W-TinyLFU](https://arxiv.org/abs/1512.00727) as its eviction policy which is
-a LFU policy that also gives high hit rates on many LRU workloads.
+a LFU policy that provides good hit rates for many use cases.
+
+See [Performance](https://github.com/aholstenson/transitory/wiki/Performance)
+in the wiki for comparisons of the hit rate of Transitory to other libraries.
 
 ## Basic API
 
