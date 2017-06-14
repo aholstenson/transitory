@@ -1,8 +1,6 @@
 'use strict';
 
-const { DATA, ON_REMOVE } = require('./symbols');
-
-const evict = Symbol('evict');
+const { DATA, ON_REMOVE, EVICT } = require('./symbols');
 
 const WINDOW = Symbol('window');
 const PROTECTED = Symbol('protected');
@@ -150,9 +148,9 @@ class BoundedCache {
 
 		// Schedule eviction
 		if(data.weightedSize >= data.forceEvictionLimit) {
-			this[evict]();
+			this[EVICT]();
 		} else if(! data.evictionTimeout) {
-			data.evictionTimeout = setTimeout(() => this[evict](), data.evictionInterval);
+			data.evictionTimeout = setTimeout(() => this[EVICT](), data.evictionInterval);
 		}
 
 		// Return the value we replaced
@@ -252,6 +250,10 @@ class BoundedCache {
 
 			this[ON_REMOVE](key, node.value, RemovalCause.EXPLICIT);
 
+			if(! data.evictionTimeout) {
+				data.evictionTimeout = setTimeout(() => this[EVICT](), data.evictionInterval);
+			}
+
 			return node.value;
 		}
 
@@ -273,7 +275,7 @@ class BoundedCache {
 		}
 	}
 
-	[evict]() {
+	[EVICT]() {
 		const data = this[DATA];
 
 		/*
@@ -340,7 +342,7 @@ class BoundedCache {
 	}
 
 	__await() {
-		this[evict]();
+		this[EVICT]();
 	}
 }
 

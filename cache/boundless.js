@@ -1,6 +1,6 @@
 'use strict';
 
-const { DATA, ON_REMOVE } = require('./symbols');
+const { DATA, ON_REMOVE, EVICT } = require('./symbols');
 
 const RemovalCause = require('../utils/removal-cause');
 
@@ -12,7 +12,12 @@ class BoundlessCache {
 		this[DATA] = {
 			values: new Map(),
 
-			removalListener: options.removalListener
+			removalListener: options.removalListener,
+
+			// Timeout used to schedule evictions
+			evictionTimeout: 0,
+			// The time to wait before an eviction is triggered by a set
+			evictionInterval: 5000
 		};
 	}
 
@@ -40,6 +45,11 @@ class BoundlessCache {
 
 		// Update with the new value
 		data.values.set(key, value);
+
+		// Schedule an eviction
+		if(! data.evictionTimeout) {
+			data.evictionTimeout = setTimeout(() => this[EVICT](), data.evictionInterval);
+		}
 
 		// Return the value we replaced
 		if(old !== undefined) {
@@ -77,6 +87,11 @@ class BoundlessCache {
 
 		if(old !== undefined) {
 			this[ON_REMOVE](key, old, RemovalCause.EXPLICIT);
+
+			if(! data.evictionTimeout) {
+				data.evictionTimeout = setTimeout(() => this[EVICT](), data.evictionInterval);
+			}
+
 			return old;
 		} else {
 			return null;
@@ -96,6 +111,18 @@ class BoundlessCache {
 		if(data.removalListener) {
 			data.removalListener(key, value, cause);
 		}
+	}
+
+	[EVICT]() {
+		const data = this[DATA];
+		if(data.evictionTimeout) {
+			clearTimeout(data.evictionTimeout);
+			data.evictionTimeout = null;
+		}
+	}
+
+	__await() {
+		this[EVICT]();
 	}
 }
 
