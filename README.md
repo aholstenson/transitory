@@ -98,9 +98,8 @@ const cache = transitory()
 ## Automatic expiry
 
 Limiting the maximum amount of time an entry can exist in the cache can be done
-by using `expireAfterWrite(timeInMs)`. For now its recommended to use this
-together with `maxSize` as removal is lazily executed when the cache is
-updated and needs to evict old data.
+by using `expireAfterWrite(timeInMs)`. Entries are lazy evaluated and will
+be removed when the values are set or deleted from the cache.
 
 ```javascript
 const cache = transitory()
