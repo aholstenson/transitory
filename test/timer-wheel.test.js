@@ -111,7 +111,7 @@ describe('TimerWheel', function() {
 			wheel.advance(2*60*1000-10000);
 			expect(expired.length).to.equal(0);
 
-			wheel.advance(2*60*1000);
+			wheel.advance(2*60*1001);
 
 			expect(expired.length).to.equal(1);
 			expect(expired[0]).to.equal('test');
