@@ -14,6 +14,7 @@ const transitory = require('transitory');
 
 const cache = transitory()
   .maxSize(1000)
+  .expireAfterWrite(60000)
   .build();
 
 cache.set('key', { value: 10 });
@@ -98,23 +99,26 @@ const cache = transitory()
 ## Automatic expiry
 
 Limiting the maximum amount of time an entry can exist in the cache can be done
-by using `expireAfterWrite(timeInMs)`. Entries are lazy evaluated and will
-be removed when the values are set or deleted from the cache.
+by using `expireAfterWrite(timeInMs)` or `expireAfterRead(timeInMs)`. Entries
+are lazy evaluated and will be removed when the values are set or deleted from
+the cache.
 
 ```javascript
 const cache = transitory()
   .maxSize(100)
   .expireAfterWrite(5000) // 5 seconds
+  .expireAfterRead(1000) // Values need to be read at least once a second
   .build();
 ```
 
-`expireAfterWrite` can also take a function that should return the maximum age
+Both methods can also take a function that should return the maximum age
 of the entry in milliseconds:
 
 ```javascript
 const cache = transitory()
   .maxSize(100)
   .expireAfterWrite((key, value) => 5000)
+  .expireAfterRead((key, value) => 5000 / key.length)
   .build();
 ```
 

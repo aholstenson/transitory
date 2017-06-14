@@ -78,9 +78,25 @@ class Builder {
 		} else if(typeof time === 'number') {
 			evaluator = () => time;
 		} else {
-			throw new Error('Expiration needs either a maximum age as a number or a function that returns a number');
+			throw new Error('expireAfterWrite needs either a maximum age as a number or a function that returns a number');
 		}
 		this.options.maxWriteAge = evaluator;
+		return this;
+	}
+
+	/**
+	 * Set that the cache should expire items some time after they have been read.
+	 */
+	expireAfterRead(time) {
+		let evaluator;
+		if(typeof time === 'function') {
+			evaluator = time;
+		} else if(typeof time === 'number') {
+			evaluator = () => time;
+		} else {
+			throw new Error('expireAfterRead needs either a maximum age as a number or a function that returns a number');
+		}
+		this.options.maxNoReadAge = evaluator;
 		return this;
 	}
 
@@ -103,7 +119,7 @@ class Builder {
 			Impl = BoundlessCache;
 		}
 
-		if(this.options.maxWriteAge > 0) {
+		if(typeof this.options.maxWriteAge !== 'undefined' || typeof this.options.maxNoReadAge !== 'undefined') {
 			Impl = ExpirationCache(Impl);
 		}
 

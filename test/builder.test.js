@@ -94,6 +94,25 @@ describe('Builder', function() {
 		expect(cache.maxSize).to.equal(200);
 	});
 
+	it('Can create boundless cache with expire after read', function() {
+		const cache = builder()
+			.expireAfterRead(5000)
+			.build();
+
+		expect(cache).to.not.be.null;
+		expect(cache.maxSize).to.equal(-1);
+	});
+
+	it('Can create bounded cache with expire after read', function() {
+		const cache = builder()
+			.maxSize(200)
+			.expireAfterRead(5000)
+			.build();
+
+		expect(cache).to.not.be.null;
+		expect(cache.maxSize).to.equal(200);
+	});
+
 	it('Can create boundless cache with metrics', function() {
 		const cache = builder()
 			.metrics()

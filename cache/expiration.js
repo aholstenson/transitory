@@ -14,18 +14,27 @@ module.exports = ParentCache => class ExpirationCache extends ParentCache {
 		super(options);
 
 		this[DATA].maxWriteAge = options.maxWriteAge;
+		this[DATA].maxNoReadAge = options.maxNoReadAge;
 		this[DATA].timerWheel = new TimerWheel(keys => keys.forEach(key => this.delete(key)));
 	}
 
-	set(key, value) {
-		const timerWheel = this[DATA].timerWheel;
+	set(key, value, options) {
+		const data = this[DATA];
+		const timerWheel = data.timerWheel;
 		let node = timerWheel.node(key, value);
 
-		if(this[DATA].maxWriteAge) {
-			let age = this[DATA].maxWriteAge(key, value);
-			if(age >= 0) {
-				this[DATA].timerWheel.schedule(node, age);
-			}
+		let age = null;
+		if(options && options.maxAge >= 0) {
+			age = options.maxAge;
+		} else if(data.maxWriteAge) {
+			age = data.maxWriteAge(key, value) || 0;
+		} else if(data.maxNoReadAge) {
+			age = data.maxNoReadAge(key, value) || 0;
+		}
+
+		if(age !== null && ! data.timerWheel.schedule(node, age)) {
+			// Age was not accepted by wheel, delete any previous value
+			return this.delete(key);
 		}
 
 		try {
@@ -43,15 +52,27 @@ module.exports = ParentCache => class ExpirationCache extends ParentCache {
 
 	getIfPresent(key, recordStats=true) {
 		if(this.has(key)) {
-			return super.getIfPresent(key, recordStats).value;
-		} else {
-			return null;
+			const node = super.getIfPresent(key, recordStats);
+			if(node) {
+				// Reschedule if we have a maximum age between reads
+				const data = this[DATA];
+				if(data.maxNoReadAge) {
+					let age = data.maxNoReadAge(key, node.value)
+					if(! data.timerWheel.schedule(node, age)) {
+						// Age was not accepted by wheel, expire it directly
+						this.delete(key);
+					}
+				}
+				return node.value;
+			}
 		}
+
+		return null;
 	}
 
 	has(key) {
 		const data = super.getIfPresent(key, false);
-		return data && ! data.isExpired();
+		return (data && ! data.isExpired()) || false;
 	}
 
 	delete(key) {
