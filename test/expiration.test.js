@@ -1,18 +1,18 @@
 
 const { expect } = require('chai');
 const BoundlessCache = require('../cache/boundless');
-const ExpireAfterWriteCache = require('../cache/expire-after-write');
+const ExpirationCache = require('../cache/expiration');
 const RemovalCause = require('../utils/removal-cause');
 
 const newCache = (listener) => {
-	let Impl = ExpireAfterWriteCache(BoundlessCache);
+	let Impl = ExpirationCache(BoundlessCache);
 	return new Impl({
 		maxWriteAge: () => 10,
 		removalListener: listener
 	});
 };
 
-describe('ExpireAfterWriteCache', function() {
+describe('ExpirationCache', function() {
 	it('Can create', function() {
 		expect(newCache()).to.not.be.null;
 	});

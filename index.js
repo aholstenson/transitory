@@ -4,7 +4,7 @@ const BoundedCache = require('./cache/bounded');
 const BoundlessCache = require('./cache/boundless');
 
 const LoadingCache = require('./cache/loading');
-const ExpireAfterWriteCache = require('./cache/expire-after-write');
+const ExpirationCache = require('./cache/expiration');
 const MetricsCache = require('./cache/metrics');
 
 const memoryEstimator = require('./utils/memoryEstimator');
@@ -104,7 +104,7 @@ class Builder {
 		}
 
 		if(this.options.maxWriteAge > 0) {
-			Impl = ExpireAfterWriteCache(Impl);
+			Impl = ExpirationCache(Impl);
 		}
 
 		if(this.options.metrics) {

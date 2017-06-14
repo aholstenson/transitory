@@ -9,7 +9,7 @@ const TimerWheel = require('../utils/timer-wheel');
  *
  * Currently supports expiration based on maximum age.
  */
-module.exports = ParentCache => class ExpireAfterWriteCache extends ParentCache {
+module.exports = ParentCache => class ExpirationCache extends ParentCache {
 	constructor(options) {
 		super(options);
 
