@@ -2,25 +2,43 @@
 
 const { DATA, ON_REMOVE } = require('./symbols');
 const RemovalCause = require('../utils/removal-cause');
+const TimerWheel = require('../utils/timer-wheel');
 
 /**
- * Wrapper for another cache that provides lazily-evaluated eviction of items
- * based on the time they were added to the cache.
+ * Wrapper for another cache that provides evictions of times based on timers.
+ *
+ * Currently supports expiration based on maximum age.
  */
 module.exports = ParentCache => class ExpireAfterWriteCache extends ParentCache {
 	constructor(options) {
 		super(options);
 
 		this[DATA].maxWriteAge = options.maxWriteAge;
+		this[DATA].timerWheel = new TimerWheel(keys => setImmediate(
+			() => keys.forEach(key => this.delete(key))
+		));
 	}
 
 	set(key, value) {
-		const replaced = super.set(key, {
-			value,
-			expires: Date.now() + this[DATA].maxWriteAge(key, value)
-		});
+		const timerWheel = this[DATA].timerWheel;
+		let node = timerWheel.node(key, value);
 
-		return replaced ? replaced.value : null;
+		if(this[DATA].maxWriteAge) {
+			let age = this[DATA].maxWriteAge(key, value);
+			if(age >= 0) {
+				this[DATA].timerWheel.schedule(node, age);
+			}
+		}
+
+		try {
+			timerWheel.advance();
+
+			const replaced = super.set(key, node);
+			return replaced ? replaced.value : null;
+		} catch(ex) {
+			timerWheel.deschedule(node);
+			throw ex;
+		}
 	}
 
 	get(key) {
@@ -37,11 +55,20 @@ module.exports = ParentCache => class ExpireAfterWriteCache extends ParentCache 
 
 	has(key) {
 		const data = super.getIfPresent(key, false);
-		return data && data.expires > Date.now();
+		return data && ! data.isExpired();
+	}
+
+	delete(key) {
+		const node = super.delete(key);
+		if(node) {
+			this[DATA].timerWheel.deschedule(node);
+			return node.value;
+		}
+		return null;
 	}
 
 	[ON_REMOVE](key, value, cause) {
-		if(value.expires <= Date.now()) {
+		if(value.isExpired()) {
 			cause = RemovalCause.EXPIRED;
 		}
 		super[ON_REMOVE](key, value.value, cause);
