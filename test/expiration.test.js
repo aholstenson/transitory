@@ -7,7 +7,7 @@ const RemovalCause = require('../utils/removal-cause');
 const newCache = (listener) => {
 	let Impl = ExpirationCache(BoundlessCache);
 	return new Impl({
-		maxWriteAge: () => 10,
+		maxWriteAge: () => 100,
 		removalListener: listener
 	});
 };
@@ -46,7 +46,7 @@ describe('ExpirationCache', function() {
 		setTimeout(() => {
 			expect(cache.get('key')).to.be.null;
 			cb();
-		}, 20);
+		}, 200);
 	});
 
 	it('Set evicts old keys', function(cb) {
@@ -107,7 +107,7 @@ describe('ExpirationCache', function() {
 					reason: RemovalCause.EXPIRED
 				});
 				cb();
-			}, 20);
+			}, 200);
 		});
 	});
 });
