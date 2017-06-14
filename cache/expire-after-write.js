@@ -1,6 +1,6 @@
 'use strict';
 
-const { DATA, ON_REMOVE } = require('./symbols');
+const { DATA, ON_REMOVE, EVICT } = require('./symbols');
 const RemovalCause = require('../utils/removal-cause');
 const TimerWheel = require('../utils/timer-wheel');
 
@@ -14,9 +14,7 @@ module.exports = ParentCache => class ExpireAfterWriteCache extends ParentCache 
 		super(options);
 
 		this[DATA].maxWriteAge = options.maxWriteAge;
-		this[DATA].timerWheel = new TimerWheel(keys => setImmediate(
-			() => keys.forEach(key => this.delete(key))
-		));
+		this[DATA].timerWheel = new TimerWheel(keys => keys.forEach(key => this.delete(key)));
 	}
 
 	set(key, value) {
@@ -31,8 +29,6 @@ module.exports = ParentCache => class ExpireAfterWriteCache extends ParentCache 
 		}
 
 		try {
-			timerWheel.advance();
-
 			const replaced = super.set(key, node);
 			return replaced ? replaced.value : null;
 		} catch(ex) {
@@ -72,5 +68,10 @@ module.exports = ParentCache => class ExpireAfterWriteCache extends ParentCache 
 			cause = RemovalCause.EXPIRED;
 		}
 		super[ON_REMOVE](key, value.value, cause);
+	}
+
+	[EVICT]() {
+		this[DATA].timerWheel.advance();
+		super[EVICT]();
 	}
 };

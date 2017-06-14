@@ -135,7 +135,7 @@ module.exports = class TimerWheel {
 	 */
 	schedule(node, time) {
 		node.remove();
-		node.time = time;
+		node.time = this.localTime + time;
 
 		const parent = this._findBucket(node);
 		if(! parent) return null;
