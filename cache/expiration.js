@@ -1,5 +1,7 @@
 'use strict';
 
+const { Duration } = require('amounts');
+
 const { DATA, ON_REMOVE, EVICT } = require('./symbols');
 const RemovalCause = require('../utils/removal-cause');
 const TimerWheel = require('../utils/timer-wheel');
@@ -24,12 +26,17 @@ module.exports = ParentCache => class ExpirationCache extends ParentCache {
 		let node = timerWheel.node(key, value);
 
 		let age = null;
-		if(options && options.maxAge >= 0) {
+		if(options && typeof options.maxAge !== 'undefined') {
 			age = options.maxAge;
 		} else if(data.maxWriteAge) {
 			age = data.maxWriteAge(key, value) || 0;
 		} else if(data.maxNoReadAge) {
 			age = data.maxNoReadAge(key, value) || 0;
+		}
+
+		if(typeof age === 'string') {
+			// Parse strings that are ages
+			age = Duration(age).as('ms');
 		}
 
 		if(age !== null && ! data.timerWheel.schedule(node, age)) {

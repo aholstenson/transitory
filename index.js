@@ -1,5 +1,7 @@
 'use strict';
 
+const { Amount, Duration } = require('amounts');
+
 const BoundedCache = require('./cache/bounded');
 const BoundlessCache = require('./cache/boundless');
 
@@ -34,7 +36,7 @@ class Builder {
 	 * something.
 	 */
 	maxSize(size) {
-		this.options.maxSize = size;
+		this.options.maxSize = Amount(size).value;
 		return this;
 	}
 
@@ -77,6 +79,9 @@ class Builder {
 			evaluator = time;
 		} else if(typeof time === 'number') {
 			evaluator = () => time;
+		} else if(typeof time === 'string') {
+			const ms = Duration(time).as('ms');
+			evaluator = () => ms;
 		} else {
 			throw new Error('expireAfterWrite needs either a maximum age as a number or a function that returns a number');
 		}
@@ -93,6 +98,9 @@ class Builder {
 			evaluator = time;
 		} else if(typeof time === 'number') {
 			evaluator = () => time;
+		} else if(typeof time === 'string') {
+			const ms = Duration(time).as('ms');
+			evaluator = () => ms;
 		} else {
 			throw new Error('expireAfterRead needs either a maximum age as a number or a function that returns a number');
 		}

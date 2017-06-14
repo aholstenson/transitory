@@ -21,6 +21,15 @@ describe('Builder', function() {
 		expect(cache.maxSize).to.equal(200);
 	});
 
+	it('Can create bounded cache with string size', function() {
+		const cache = builder()
+			.maxSize('20k')
+			.build();
+
+		expect(cache).to.not.be.null;
+		expect(cache.maxSize).to.equal(20000);
+	});
+
 	it('Can create boundless cache with loader', function() {
 		const cache = builder()
 			.withLoader(() => Math.random())
@@ -94,6 +103,15 @@ describe('Builder', function() {
 		expect(cache.maxSize).to.equal(200);
 	});
 
+	it('Can create boundless cache with expire after write (string)', function() {
+		const cache = builder()
+			.expireAfterWrite('1h 10m')
+			.build();
+
+		expect(cache).to.not.be.null;
+		expect(cache.maxSize).to.equal(-1);
+	});
+
 	it('Can create boundless cache with expire after read', function() {
 		const cache = builder()
 			.expireAfterRead(5000)
@@ -111,6 +129,15 @@ describe('Builder', function() {
 
 		expect(cache).to.not.be.null;
 		expect(cache.maxSize).to.equal(200);
+	});
+
+	it('Can create boundless cache with expire after read (string)', function() {
+		const cache = builder()
+			.expireAfterRead('1h 10m')
+			.build();
+
+		expect(cache).to.not.be.null;
+		expect(cache.maxSize).to.equal(-1);
 	});
 
 	it('Can create boundless cache with metrics', function() {

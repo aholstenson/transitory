@@ -83,6 +83,16 @@ describe('ExpirationCache', function() {
 			}, 51);
 		});
 
+		it('Set value in cache with options (string) and timeout', function(cb) {
+			const cache = newCache();
+			cache.set('key', 'value', { maxAge: '50 ms' });
+
+			setTimeout(() => {
+				expect(cache.get('key')).to.be.null;
+				cb();
+			}, 51);
+		});
+
 		it('Set evicts old keys', function(cb) {
 			const cache = newCache();
 			cache.set('key', 'value');

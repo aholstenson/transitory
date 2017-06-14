@@ -99,7 +99,7 @@ const cache = transitory()
 ## Automatic expiry
 
 Limiting the maximum amount of time an entry can exist in the cache can be done
-by using `expireAfterWrite(timeInMs)` or `expireAfterRead(timeInMs)`. Entries
+by using `expireAfterWrite(time)` or `expireAfterRead(time)`. Entries
 are lazy evaluated and will be removed when the values are set or deleted from
 the cache.
 
@@ -107,9 +107,12 @@ the cache.
 const cache = transitory()
   .maxSize(100)
   .expireAfterWrite(5000) // 5 seconds
-  .expireAfterRead(1000) // Values need to be read at least once a second
+  .expireAfterRead('1s') // Values need to be read at least once a second
   .build();
 ```
+
+Values can either be a number representing milliseconds or a duration string
+such as `1s`, `2m`, `1h` or `5d 20m`.
 
 Both methods can also take a function that should return the maximum age
 of the entry in milliseconds:
