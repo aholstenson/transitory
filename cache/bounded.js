@@ -268,6 +268,30 @@ class BoundedCache {
 		return data.values.has(key);
 	}
 
+	clear() {
+		const data = this[DATA];
+
+		const oldValues = data.values;
+		data.values = new Map();
+		for(let [key, node] of oldValues) {
+			this[ON_REMOVE](key, node.value, RemovalCause.EXPLICIT);
+		}
+		data.weightedSize = 0;
+
+		data.window.head.remove();
+		data.window.size = 0;
+
+		data.probation.head.remove();
+
+		data.protected.head.remove();
+		data.protected.size = 0;
+
+		if(data.evictionTimeout) {
+			clearTimeout(data.evictionTimeout);
+			data.evictionTimeout = null;
+		}
+	}
+
 	[ON_REMOVE](key, value, cause) {
 		const data = this[DATA];
 		if(data.removalListener) {

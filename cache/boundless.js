@@ -106,6 +106,15 @@ class BoundlessCache {
 		return data.values.has(key);
 	}
 
+	clear() {
+		const data = this[DATA];
+		const oldValues = data.values;
+		data.values = new Map();
+		for(let [key, value] of oldValues) {
+			this[ON_REMOVE](key, value, RemovalCause.EXPLICIT);
+		}
+	}
+
 	[ON_REMOVE](key, value, cause) {
 		const data = this[DATA];
 		if(data.removalListener) {

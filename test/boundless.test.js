@@ -30,6 +30,20 @@ describe('BoundlessCache', function() {
 		expect(cache.get('key')).to.equal(null);
 	});
 
+	it('Clear for empty', function() {
+		const cache = new BoundlessCache({});
+		cache.clear();
+		expect(cache.size).to.equal(0);
+	});
+
+	it('Clear for single', function() {
+		const cache = new BoundlessCache({});
+		cache.set('key', 'value');
+
+		cache.clear();
+		expect(cache.size).to.equal(0);
+	});
+
 	describe('Removal listeners', function() {
 		it('Triggers on delete', function() {
 			const listener = removalListener();
@@ -62,6 +76,23 @@ describe('BoundlessCache', function() {
 				key: 'one',
 				value: 1234,
 				reason: RemovalCause.REPLACED
+			});
+		});
+
+		it('Triggers on clear', function() {
+			const listener = removalListener();
+			const cache = new BoundlessCache({
+				removalListener: listener
+			});
+
+			cache.set('one', 1234);
+			expect(listener.removed).to.equal(null);
+
+			cache.clear();
+			expect(listener.removed).to.deep.equal({
+				key: 'one',
+				value: 1234,
+				reason: RemovalCause.EXPLICIT
 			});
 		});
 	})

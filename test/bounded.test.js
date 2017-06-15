@@ -49,7 +49,21 @@ describe('BoundedCache', function() {
 
 		cache.delete('key');
 		expect(cache.weightedSize).to.equal(1);
-	})
+	});
+
+	it('Clear for empty', function() {
+		const cache = new BoundedCache({ maxSize: 50 });
+		cache.clear();
+		expect(cache.size).to.equal(0);
+	});
+
+	it('Clear for single', function() {
+		const cache = new BoundedCache({ maxSize: 50 });
+		cache.set('key', 'value');
+
+		cache.clear();
+		expect(cache.size).to.equal(0);
+	});
 
 	describe('Eviction', function() {
 		it('Does not exceed maxSize', function() {
@@ -149,6 +163,25 @@ describe('BoundedCache', function() {
 				key: 4,
 				value: 1234,
 				reason: RemovalCause.SIZE
+			});
+		});
+
+		it('Triggers on clear', function() {
+			const listener = removalListener();
+			const cache = new BoundedCache({
+				maxSize: 10,
+				removalListener: listener
+			});
+
+			cache.set('one', 1234);
+			cache.__await();
+			expect(listener.removed).to.equal(null);
+
+			cache.clear();
+			expect(listener.removed).to.deep.equal({
+				key: 'one',
+				value: 1234,
+				reason: RemovalCause.EXPLICIT
 			});
 		});
 	});
