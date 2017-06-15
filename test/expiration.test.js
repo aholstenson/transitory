@@ -80,7 +80,7 @@ describe('ExpirationCache', function() {
 			setTimeout(() => {
 				expect(cache.get('key')).to.be.null;
 				cb();
-			}, 51);
+			}, 60);
 		});
 
 		it('Set value in cache with options (string) and timeout', function(cb) {
@@ -90,7 +90,7 @@ describe('ExpirationCache', function() {
 			setTimeout(() => {
 				expect(cache.get('key')).to.be.null;
 				cb();
-			}, 51);
+			}, 60);
 		});
 
 		it('Set evicts old keys', function(cb) {
