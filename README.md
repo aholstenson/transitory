@@ -105,7 +105,6 @@ the cache.
 
 ```javascript
 const cache = transitory()
-  .maxSize(100)
   .expireAfterWrite(5000) // 5 seconds
   .expireAfterRead('1s') // Values need to be read at least once a second
   .build();
@@ -119,10 +118,17 @@ of the entry in milliseconds:
 
 ```javascript
 const cache = transitory()
-  .maxSize(100)
   .expireAfterWrite((key, value) => 5000)
   .expireAfterRead((key, value) => 5000 / key.length)
   .build();
+```
+
+If either `expireAfterWrite` or `expireAfterRead` has been used a maximum
+age can be given to `set`:
+
+```javascript
+cache.set('key', value, { maxAge: 5000 });
+cache.set(1000, value, { maxAge: '1m' });
 ```
 
 ## Loading caches
