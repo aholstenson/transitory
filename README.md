@@ -5,16 +5,16 @@
 [![Coverage Status](https://coveralls.io/repos/aholstenson/transitory/badge.svg)](https://coveralls.io/github/aholstenson/transitory)
 [![Dependencies](https://david-dm.org/aholstenson/transitory.svg)](https://david-dm.org/aholstenson/transitory)
 
-Transitory is a in-memory caching library for JavaScript. Transitory provides
-caches with eviction based on frequency and recency, expiration, automatic
-loading and metrics.
+Transitory is a in-memory cache with high hit rates using eviction based on
+frequency and recency. Additional cache layers support time-based expiration,
+automatic loading and metrics.
 
 ```javascript
 const transitory = require('transitory');
 
 const cache = transitory()
   .maxSize(1000)
-  .expireAfterWrite(60000)
+  .expireAfterWrite('60s')
   .build();
 
 cache.set('key', { value: 10 });
@@ -37,13 +37,56 @@ in the wiki for comparisons of the hit rate of Transitory to other libraries.
 
 There are a few basic things that all caches support.
 
-* `cache.maxSize: number` - the maximum size of the cache or `-1` if boundless
-* `cache.size: number` - the number of items in the cache
-* `cache.get(key): mixed|null` - get a cached value
-* `cache.getIfPresent(key): mixed|null` - get a cached value without optional loading (see below)
-* `cache.has(key): boolean` - check if the given key exists in the cache
-* `cache.set(key, value): mixed|null` - set a value in the cache. Returns the previous value or `null`
-* `cache.delete(key): mixed|null` - delete a value in the cache. Returns the removed value or `null`
+* `cache.set(key, value): mixed|null`
+
+    Set a value in the cache. The ke can be either a string or a number, while
+    the value can be anything. Returns the previous value or `null` if no value
+    exists for the given key.
+
+* `cache.get(key): mixed|null`
+
+    Get a cached value. The key can be either a string or a number. Will return
+    any cached value and update is usage frequency.
+
+* `cache.getIfPresent(key): mixed|null`
+
+    Same as `get(key)` except this will never load a value if it does not exist.
+    Usually used together with a loading cache to bypass loading if not needed.
+
+* `cache.has(key): boolean`
+
+    Check if the given key exists in the cache. The key can be either a
+    string or a number.
+
+* `cache.delete(key): mixed|null`
+
+    Delete a value in the cache. The key can be either a key or a value.
+    Returns the removed value or `null` if the value was not in the cache.
+
+* `cache.clear()`
+
+    Clear the cache removing all of the entries cached.
+
+* `cache.keys(): Array[mixed]`
+
+    Get all of the keys in the cache as an `Array`. Can be used to iterate
+    over all of the values in the cache, but be sure to protect against values
+    being removed during iteration due to time-based expiration if used.
+
+* `cache.maxSize: number`
+
+   The maximum size of the cache or `-1` if boundless. This size represents the
+   weighted size of the cache.
+
+* `cache.size: number`
+
+   The number of entries stored in the cache. This is the actual number of entries
+   and not the weighted size of all of the entries in the cache.
+
+* `cache.weightedSize: number`
+
+    Get the weighted size of the cache. This is the weight of all entries that
+    are currently in the cache.
 
 ## Building a cache
 
