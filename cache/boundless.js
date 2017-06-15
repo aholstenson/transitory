@@ -35,6 +35,10 @@ class BoundlessCache {
 		return this[DATA].values.size;
 	}
 
+	get weightedSize() {
+		return this.size;
+	}
+
 	/**
 	 * Cache and associate a value with the given key.
 	 */
