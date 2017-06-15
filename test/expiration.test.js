@@ -104,6 +104,16 @@ describe('ExpirationCache', function() {
 				cb();
 			}, 1080);
 		});
+
+		it('Keys evicted before array returned', function(cb) {
+			const cache = newCache();
+			cache.set('key', 'value', { maxAge: '50 ms' });
+
+			setTimeout(() => {
+				expect(cache.keys().length).to.equal(0);
+				cb();
+			}, 1080);
+		});
 	});
 
 	describe('With maxNoReadAge', function() {

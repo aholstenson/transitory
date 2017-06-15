@@ -44,6 +44,13 @@ describe('BoundlessCache', function() {
 		expect(cache.size).to.equal(0);
 	});
 
+	it('Getting keys work', function() {
+		const cache = new BoundlessCache({});
+		cache.set('key', 'value');
+
+		expect(cache.keys()).to.deep.equal([ 'key' ]);
+	});
+
 	describe('Removal listeners', function() {
 		it('Triggers on delete', function() {
 			const listener = removalListener();

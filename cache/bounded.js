@@ -292,6 +292,11 @@ class BoundedCache {
 		}
 	}
 
+	keys() {
+		this[EVICT]();
+		return Array.from(this[DATA].values.keys());
+	}
+
 	[ON_REMOVE](key, value, cause) {
 		const data = this[DATA];
 		if(data.removalListener) {

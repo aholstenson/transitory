@@ -65,6 +65,13 @@ describe('BoundedCache', function() {
 		expect(cache.size).to.equal(0);
 	});
 
+	it('Getting keys work', function() {
+		const cache = new BoundedCache({ maxSize: 50 });
+		cache.set('key', 'value');
+
+		expect(cache.keys()).to.deep.equal([ 'key' ]);
+	});
+
 	describe('Eviction', function() {
 		it('Does not exceed maxSize', function() {
 			const maxSize = 10;
@@ -95,6 +102,17 @@ describe('BoundedCache', function() {
 			expect(cache.get(1)).to.equal(null);
 			expect(cache.get(2)).to.equal(2);
 			expect(cache.get(3)).to.equal(3);
+		});
+
+		it('Keys evicted before array returned', function() {
+			const maxSize = 10;
+			const cache = new BoundedCache({ maxSize });
+
+			for(let i=0; i<maxSize*2; i++) {
+				cache.set(i, i);
+			}
+
+			expect(cache.keys().length).to.equal(maxSize);
 		});
 	});
 
