@@ -85,7 +85,6 @@ module.exports = ParentCache => class ExpirationCache extends ParentCache {
 	delete(key) {
 		const node = super.delete(key);
 		if(node) {
-			this[DATA].timerWheel.deschedule(node);
 			return node.value;
 		}
 		return null;
@@ -95,6 +94,8 @@ module.exports = ParentCache => class ExpirationCache extends ParentCache {
 		if(value.isExpired()) {
 			cause = RemovalCause.EXPIRED;
 		}
+
+		this[DATA].timerWheel.deschedule(value);
 		super[ON_REMOVE](key, value.value, cause);
 	}
 
