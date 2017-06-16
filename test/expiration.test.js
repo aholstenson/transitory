@@ -99,7 +99,7 @@ describe('ExpirationCache', function() {
 
 			setTimeout(() => {
 				cache.set('key2', 'value');
-				cache.__await();
+				cache.cleanUp();
 				expect(cache.size).to.equal(1);
 				cb();
 			}, 1080);

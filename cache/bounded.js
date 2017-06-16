@@ -297,6 +297,10 @@ class BoundedCache {
 		return Array.from(this[DATA].values.keys());
 	}
 
+	cleanUp() {
+		this[EVICT]();
+	}
+
 	[ON_REMOVE](key, value, cause) {
 		const data = this[DATA];
 		if(data.removalListener) {
@@ -368,10 +372,6 @@ class BoundedCache {
 			clearTimeout(data.evictionTimeout);
 			data.evictionTimeout = null;
 		}
-	}
-
-	__await() {
-		this[EVICT]();
 	}
 }
 

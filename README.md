@@ -88,6 +88,15 @@ There are a few basic things that all caches support.
     Get the weighted size of the cache. This is the weight of all entries that
     are currently in the cache.
 
+* `cache.cleanUp()`
+
+    _Advanced:_ Request clean up of the cache by removing expired entries and
+    old data. Clean up is done automatically a short time after sets and
+    deletes, but if your cache uses time-based expiration and has very
+    sporadic updates it might be a good idea to call `cleanUp()` at times.
+    A good starting point would be to call `cleanUp()` in a `setInterval`
+    with a delay of at least a few minutes.
+
 ## Building a cache
 
 Caches are created via a builder that helps with adding on all requested
@@ -134,7 +143,7 @@ memory:
 
 ```javascript
 const cache = transitory()
-  .maxSize(5242880)
+  .maxSize('50M') // 50 000 000
   .withWeigher(transitory.memoryUsageWeigher)
   .build();
 ```

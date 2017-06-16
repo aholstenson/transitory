@@ -79,7 +79,7 @@ describe('BoundedCache', function() {
 
 			for(let i=0; i<maxSize*2; i++) {
 				cache.set(i, i);
-				cache.__await();
+				cache.cleanUp();
 			}
 
 			expect(cache.size).to.equal(maxSize);
@@ -97,7 +97,7 @@ describe('BoundedCache', function() {
 			cache.get(2);
 
 			cache.set(maxSize, maxSize);
-			cache.__await();
+			cache.cleanUp();
 
 			expect(cache.get(1)).to.equal(null);
 			expect(cache.get(2)).to.equal(2);
@@ -125,11 +125,11 @@ describe('BoundedCache', function() {
 			});
 
 			cache.set('one', 1234);
-			cache.__await();
+			cache.cleanUp();
 			expect(listener.removed).to.equal(null);
 
 			cache.delete('one');
-			cache.__await();
+			cache.cleanUp();
 			expect(listener.removed).to.deep.equal({
 				key: 'one',
 				value: 1234,
@@ -145,11 +145,11 @@ describe('BoundedCache', function() {
 			});
 
 			cache.set('one', 1234);
-			cache.__await();
+			cache.cleanUp();
 			expect(listener.removed).to.equal(null);
 
 			cache.set('one', 4321);
-			cache.__await();
+			cache.cleanUp();
 			expect(listener.removed).to.deep.equal({
 				key: 'one',
 				value: 1234,
@@ -167,7 +167,7 @@ describe('BoundedCache', function() {
 			for(let i=0; i<5; i++) {
 				cache.set(i, 1234);
 			}
-			cache.__await();
+			cache.cleanUp();
 			expect(listener.removed).to.equal(null);
 
 			cache.get(0);
@@ -176,7 +176,7 @@ describe('BoundedCache', function() {
 			cache.get(3);
 
 			cache.set(5, 1234);
-			cache.__await();
+			cache.cleanUp();
 			expect(listener.removed).to.deep.equal({
 				key: 4,
 				value: 1234,
@@ -192,7 +192,7 @@ describe('BoundedCache', function() {
 			});
 
 			cache.set('one', 1234);
-			cache.__await();
+			cache.cleanUp();
 			expect(listener.removed).to.equal(null);
 
 			cache.clear();
@@ -226,7 +226,7 @@ describe('BoundedCache', function() {
 				cache.set(i, i);
 			}
 
-			cache.__await();
+			cache.cleanUp();
 
 			expect(cache.size).to.equal(5);
 		});
@@ -241,7 +241,7 @@ describe('BoundedCache', function() {
 				cache.set(i, i);
 			}
 
-			cache.__await();
+			cache.cleanUp();
 
 			expect(cache.weightedSize).to.be.most(500);
 		});
@@ -254,7 +254,7 @@ describe('BoundedCache', function() {
 
 			randomTrace(cache, 400, 5000);
 
-			cache.__await();
+			cache.cleanUp();
 
 			expect(cache.weightedSize).to.be.most(500);
 		});
