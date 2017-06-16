@@ -1,5 +1,6 @@
 'use strict';
 
+const BaseCache = require('./base');
 const { DATA, ON_REMOVE, EVICT } = require('./symbols');
 
 const RemovalCause = require('../utils/removal-cause');
@@ -7,8 +8,10 @@ const RemovalCause = require('../utils/removal-cause');
 /**
  * Boundless cache.
  */
-class BoundlessCache {
+class BoundlessCache extends BaseCache {
 	constructor(options) {
+		super(options);
+
 		this[DATA] = {
 			values: new Map(),
 

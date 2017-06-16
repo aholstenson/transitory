@@ -1,5 +1,6 @@
 'use strict';
 
+const BaseCache = require('./base');
 const { DATA, ON_REMOVE, EVICT } = require('./symbols');
 
 const WINDOW = Symbol('window');
@@ -19,8 +20,10 @@ const percentOverflow = 0.01;
  * See https://arxiv.org/pdf/1512.00727.pdf for details about TinyLFU and
  * the W-TinyLFU optimization.
  */
-class BoundedCache {
+class BoundedCache extends BaseCache {
 	constructor(options) {
+		super(options);
+
 		const maxMain = Math.floor(percentInMain * options.maxSize);
 
 		/*

@@ -149,3 +149,4 @@ module.exports = function() {
 
 module.exports.RemovalCause = require('./utils/removal-cause');
 module.exports.memoryUsageWeigher = (key, value) => memoryEstimator(value);
+module.exports.Cache = require('./cache/base');

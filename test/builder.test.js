@@ -21,6 +21,21 @@ describe('Builder', function() {
 		expect(cache.maxSize).to.equal(200);
 	});
 
+	it('Boundless cache is cache', function() {
+		const cache = builder()
+			.build();
+
+		expect(cache instanceof builder.Cache).to.equal(true);
+	});
+
+	it('Bounded cache is cache', function() {
+		const cache = builder()
+			.maxSize(200)
+			.build();
+
+		expect(cache instanceof builder.Cache).to.equal(true);
+	});
+
 	it('Can create bounded cache with string size', function() {
 		const cache = builder()
 			.maxSize('20k')
@@ -82,6 +97,23 @@ describe('Builder', function() {
 		const p = cache.get('id');
 		expect(p).to.be.instanceof(Promise);
 		return p;
+	});
+
+	it('Boundless cache with loader is cache', function() {
+		const cache = builder()
+			.loading()
+			.build();
+
+		expect(cache instanceof builder.Cache).to.equal(true);
+	});
+
+	it('Bounded cache with loader is cache', function() {
+		const cache = builder()
+			.maxSize(200)
+			.loading()
+			.build();
+
+		expect(cache instanceof builder.Cache).to.equal(true);
 	});
 
 	it('Can create boundless cache with expire after write', function() {
