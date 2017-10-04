@@ -2,7 +2,6 @@
   "plugins": [ "node" ],
   "extends": [ "eslint:recommended", "plugin:node/recommended" ],
   "env": {},
-  "ecmaFeatures": {},
   "globals": {},
   "rules": {
     "node/no-unsupported-features": [
