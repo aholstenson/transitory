@@ -1,35 +1,39 @@
 'use strict';
 
+function throwError() {
+	throw new Error('Unusable cache, create caches via the builder');
+}
+
 module.exports = class BaseCache {
 	set(key, value) {
-		throw new Error('Unusable cache, reate caches via the builder');
+		throwError();
 	}
 
 	get(key) {
-		throw new Error('Unusable cache, reate caches via the builder');
+		throwError();
 	}
 
 	getIfPresent(key) {
-		throw new Error('Unusable cache, reate caches via the builder');
+		throwError();
 	}
 
 	delete(key) {
-		throw new Error('Unusable cache, reate caches via the builder');
+		throwError();
 	}
 
 	has(key) {
-		throw new Error('Unusable cache, reate caches via the builder');
+		throwError();
 	}
 
 	clear() {
-		throw new Error('Unusable cache, reate caches via the builder');
+		throwError();
 	}
 
 	keys() {
-		throw new Error('Unusable cache, reate caches via the builder');
+		throwError();
 	}
 
 	cleanUp() {
-		throw new Error('Unusable cache, reate caches via the builder');
+		throwError();
 	}
 }
