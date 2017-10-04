@@ -1,6 +1,7 @@
 'use strict';
 
-const { amount, duration } = require('amounts');
+const amount = require('amounts/lib/amount');
+const duration = require('amounts/lib/duration');
 
 const BoundedCache = require('./cache/bounded');
 const BoundlessCache = require('./cache/boundless');
