@@ -1,6 +1,6 @@
 {
   "name": "transitory",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "In-memory cache with high hit rates via LFU eviction. Supports time-based expiration, automatic loading and metrics.",
   "license": "MIT",
   "repository": "aholstenson/transitory",
