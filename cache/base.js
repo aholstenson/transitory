@@ -17,6 +17,10 @@ module.exports = class BaseCache {
 		throwError();
 	}
 
+	peek(key) {
+		return this.getIfPresent(key, false);
+	}
+
 	delete(key) {
 		throwError();
 	}

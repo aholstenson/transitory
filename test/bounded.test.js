@@ -16,6 +16,7 @@ describe('BoundedCache', function() {
 
 		expect(cache.has('key')).to.equal(true);
 		expect(cache.get('key')).to.equal('value');
+		expect(cache.peek('key')).to.equal('value');
 	});
 
 	it('Get non-existent value in cache', function() {

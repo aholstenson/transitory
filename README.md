@@ -55,6 +55,12 @@ There are a few basic things that all caches support.
     If `recordStats` is set to `false`, then the get won't increase any metrics
     or affect any stats of a bounded cache.
 
+* `cache.peek(key): mixed|null`
+
+    Same as `getIfPresent(key, false)`. Will return the cached value, but never
+		load a value if it does not exist and not affect any metrics or stats of
+		the cache.
+
 * `cache.has(key): boolean`
 
     Check if the given key exists in the cache. The key can be either a
