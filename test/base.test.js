@@ -22,6 +22,11 @@ describe('BaseCache', function() {
 		expect(() => cache.getIfPresent('key')).to.throw();
 	});
 
+	it('peek throws', function() {
+		const cache = new BaseCache();
+		expect(() => cache.peek('key')).to.throw();
+	});
+
 	it('delete throws', function() {
 		const cache = new BaseCache();
 		expect(() => cache.delete('key')).to.throw();

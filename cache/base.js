@@ -13,8 +13,12 @@ module.exports = class BaseCache {
 		throwError();
 	}
 
-	getIfPresent(key) {
+	getIfPresent(key, recordStats=true) {
 		throwError();
+	}
+
+	peek(key) {
+		return this.getIfPresent(key, false);
 	}
 
 	delete(key) {

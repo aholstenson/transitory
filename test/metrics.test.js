@@ -44,4 +44,14 @@ describe('MetricsCache', function() {
 		expect(cache.metrics.misses).to.equal(0);
 		expect(cache.metrics.hitRate).to.equal(1);
 	});
+
+	it('Peek without recording stats', function() {
+		const cache = newCache();
+
+		expect(cache.peek('key')).to.equal(null);
+
+		expect(cache.metrics.hits).to.equal(0);
+		expect(cache.metrics.misses).to.equal(0);
+		expect(cache.metrics.hitRate).to.equal(1);
+	});
 });

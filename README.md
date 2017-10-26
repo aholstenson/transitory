@@ -48,10 +48,18 @@ There are a few basic things that all caches support.
     Get a cached value. The key can be either a string or a number. Will return
     any cached value and update is usage frequency.
 
-* `cache.getIfPresent(key): mixed|null`
+* `cache.getIfPresent(key, [recordStats]): mixed|null`
 
     Same as `get(key)` except this will never load a value if it does not exist.
     Usually used together with a loading cache to bypass loading if not needed.
+    If `recordStats` is set to `false`, then the get won't increase any metrics
+    or affect any stats of a bounded cache.
+
+* `cache.peek(key): mixed|null`
+
+    Same as `getIfPresent(key, false)`. Will return the cached value, but never
+		load a value if it does not exist and not affect any metrics or stats of
+		the cache.
 
 * `cache.has(key): boolean`
 
