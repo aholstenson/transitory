@@ -9,6 +9,7 @@ const PROBATION = Symbol('probation');
 
 const RemovalCause = require('../utils/removal-cause');
 const CountMinSketch = require('../utils/sketch');
+const CacheNode = require('../utils/cacheNode');
 
 const percentInMain = 0.99;
 const percentProtected = 0.8;
@@ -50,21 +51,21 @@ class BoundedCache extends BaseCache {
 
 			// Tracking of the window cache, around 1% of the total cache
 			window: {
-				head: new Node(),
+				head: new BoundedNode(),
 				size: 0,
 				maxSize: options.maxSize - maxMain
 			},
 
 			// SLRU protected segment, 80% * 99% of the total cache
 			protected: {
-				head: new Node(),
+				head: new BoundedNode(),
 				size: 0,
 				maxSize: Math.floor(maxMain * percentProtected)
 			},
 
 			// SLRU probation segment, 20% * 99% of the total cache
 			probation: {
-				head: new Node()
+				head: new BoundedNode()
 			},
 
 			// Timeout used to schedule evictions
@@ -106,7 +107,7 @@ class BoundedCache extends BaseCache {
 		const old = data.values.get(key);
 
 		// Create a node and add it to the backing map
-		const node = new Node(key, value);
+		const node = new BoundedNode(key, value);
 		data.values.set(key, node);
 
 		if(data.weigher) {
@@ -383,35 +384,12 @@ module.exports = BoundedCache;
 /**
  * Node in a double-linked list.
  */
-class Node {
+class BoundedNode extends CacheNode {
 	constructor(key, value) {
-		this.key = key;
-		this.value = value;
+		super(key, value);
+
 		this.hashCode = CountMinSketch.hash(key);
 		this.weight = 1;
-
 		this.location = WINDOW;
-
-		this.previous = this;
-		this.next = this;
-	}
-
-	remove() {
-		this.previous.next = this.next;
-		this.next.previous = this.previous;
-		this.next = this.previous = this;
-	}
-
-	append(head) {
-		const tail = head.previous;
-		head.previous = this;
-		tail.next = this;
-		this.next = head;
-		this.previous = tail;
-	}
-
-	move(head) {
-		this.remove();
-		this.append(head);
 	}
 }

@@ -1,8 +1,13 @@
 'use strict';
 
+const CacheNode = require('./cacheNode');
+
 const OBJ_OVERHEAD = 4;
 
 module.exports = function memoryEstimator(value) {
+	if (value instanceof CacheNode) {
+		value = { [value.key]: value.value };
+	}
 	switch(typeof value) {
 		case 'string':
 			return OBJ_OVERHEAD + value.length * 2;

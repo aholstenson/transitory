@@ -1,5 +1,7 @@
 'use strict';
 
+const CacheNode = require('./cacheNode');
+
 /**
  * A timer wheel for variable expiration of items in a cache. Stores items in
  * layers that are circular buffers that represent a time span.
@@ -30,7 +32,7 @@ module.exports = class TimerWheel {
 		this.layers = LAYERS.map(b => {
 			const result = new Array(b);
 			for(let i=0; i<b; i++) {
-				result[i] = new Node();
+				result[i] = new TimerNode();
 			}
 			return result;
 		});
@@ -127,7 +129,7 @@ module.exports = class TimerWheel {
 	 * should be evicted.
 	 */
 	node(key, value) {
-		return new Node(this, key, value);
+		return new TimerNode(this, key, value);
 	}
 
 	/**
@@ -156,37 +158,14 @@ module.exports = class TimerWheel {
 }
 
 /* Node in a doubly linked list. More or less the same as used in BoundedCache */
-class Node {
+class TimerNode extends CacheNode {
 	constructor(wheel, key, value) {
+		super(key, value);
+
 		this.wheel = wheel;
-
-		this.key = key;
-		this.value = value;
-
-		this.previous = this;
-		this.next = this;
 	}
 
 	isExpired() {
 		return this.wheel.localTime > this.time;
-	}
-
-	remove() {
-		this.previous.next = this.next;
-		this.next.previous = this.previous;
-		this.next = this.previous = this;
-	}
-
-	append(head) {
-		const tail = head.previous;
-		head.previous = this;
-		tail.next = this;
-		this.next = head;
-		this.previous = tail;
-	}
-
-	move(head) {
-		this.remove();
-		this.append(head);
 	}
 }
