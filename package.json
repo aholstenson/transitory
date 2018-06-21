@@ -1,5 +1,5 @@
 {
-  "name": "transitory",
+  "name": "transitory-hk",
   "version": "1.2.1",
   "description": "In-memory cache with high hit rates via LFU eviction. Supports time-based expiration, automatic loading and metrics.",
   "license": "MIT",
