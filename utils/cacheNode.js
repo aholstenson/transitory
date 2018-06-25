@@ -1,6 +1,3 @@
-const WINDOW = Symbol('window');
-const CountMinSketch = require('./sketch');
-
 /**
  * Node in a double-linked list.
  */
