@@ -1,6 +1,7 @@
 
 const { expect } = require('chai');
 const memoryEstimator = require('../utils/memoryEstimator');
+const CacheNode = require('../utils/cacheNode');
 
 describe('memoryEstimator', function() {
 	it('string', function() {
@@ -21,5 +22,9 @@ describe('memoryEstimator', function() {
 
 	it('array', function() {
 		expect(memoryEstimator([ 2, 'kaka' ])).to.equal(24);
+	});
+
+	it('CacheNode', function () {
+		expect(memoryEstimator(new CacheNode('key', { 'kaka': 2 }))).to.equal(46);
 	});
 });
