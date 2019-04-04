@@ -15,6 +15,7 @@
   },
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "engines": {
     "node": ">=8.0.0"
   },
