@@ -5,10 +5,19 @@
   "license": "MIT",
   "repository": "aholstenson/transitory",
   "scripts": {
-    "test": "node_modules/.bin/mocha test/**/*.test.js && node_modules/.bin/eslint .",
-    "coverage": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec ./test/**/*.test.js"
+    "test": "jest",
+    "ci": "npm run coverage && npm run lint",
+    "coverage": "jest --coverage",
+    "lint": "tslint  --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
+    "build": "tsc --module commonjs --target es5 --outDir dist/cjs && tsc --module es6 --target es6 --outDir dist/esm",
+    "prebuild": "rimraf dist",
+    "prepublishOnly": "npm run build"
   },
-  "main": "index.js",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "engines": {
+    "node": ">=8.0.0"
+  },
   "keywords": [
     "cache",
     "caching",
@@ -16,14 +25,15 @@
     "lru"
   ],
   "devDependencies": {
-    "chai": "^4.1.2",
-    "coveralls": "^3.0.0",
-    "eslint": "^5.0.0",
-    "eslint-plugin-node": "^6.0.1",
-    "istanbul": "^0.4.5",
-    "mocha": "^5.2.0"
+    "@types/jest": "^24.0.11",
+    "@types/node": "^11.13.0",
+    "coveralls": "^3.0.3",
+    "jest": "^24.7.1",
+    "jest-config": "^24.7.1",
+    "rimraf": "^2.6.3",
+    "ts-jest": "^24.0.1",
+    "tslint": "^5.15.0",
+    "typescript": "^3.4.1"
   },
-  "dependencies": {
-    "amounts": "^0.5.0"
-  }
+  "dependencies": {}
 }
