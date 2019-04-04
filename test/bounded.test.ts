@@ -17,6 +17,8 @@ describe('BoundedCache', function() {
 		expect(cache.has('key')).toEqual(true);
 		expect(cache.getIfPresent('key')).toEqual('value');
 		expect(cache.peek('key')).toEqual('value');
+
+		cache.cleanUp();
 	});
 
 	it('Get non-existent value in cache', function() {
@@ -31,6 +33,8 @@ describe('BoundedCache', function() {
 
 		cache.delete('key');
 		expect(cache.getIfPresent('key')).toEqual(null);
+
+		cache.cleanUp();
 	});
 
 	it('Weighted size is correct', function() {
@@ -50,6 +54,8 @@ describe('BoundedCache', function() {
 
 		cache.delete('key');
 		expect(cache.weightedSize).toEqual(1);
+
+		cache.cleanUp();
 	});
 
 	it('Clear for empty', function() {
@@ -71,6 +77,7 @@ describe('BoundedCache', function() {
 		cache.set('key', 'value');
 
 		expect(cache.keys()).toEqual([ 'key' ]);
+		cache.cleanUp();
 	});
 
 	describe('Eviction', function() {
@@ -114,6 +121,7 @@ describe('BoundedCache', function() {
 			}
 
 			expect(cache.keys().length).toEqual(maxSize);
+			cache.cleanUp();
 		});
 	});
 
@@ -211,6 +219,8 @@ describe('BoundedCache', function() {
 
 			expect(cache.has('key')).toEqual(true);
 			expect(cache.getIfPresent('key')).toEqual('value');
+
+			cache.cleanUp();
 		});
 
 		it('Does not exceed maxSize', function() {
@@ -255,7 +265,7 @@ describe('BoundedCache', function() {
 
 			expect(cache.weightedSize).toBeLessThanOrEqual(500);
 		});
-	})
+	});
 });
 
 function randomTrace(cache: BoundedCache<number, number>, max: number, n: number) {
