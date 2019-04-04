@@ -253,20 +253,20 @@ Caches support a single removal listener that will be notified when items in
 the cache are removed.
 
 ```javascript
-import { RemovalCause } from 'transitory';
+import { RemovalReason } from 'transitory';
 const cache = newCache()
   .withRemovalListener((key, value, reason) => {
     switch(reason) {
-      case RemovalCause.EXPLICIT:
+      case RemovalReason.EXPLICIT:
         // The user of the cache requested something to be removed
         break;
-      case RemovalCause.REPLACED:
+      case RemovalReason.REPLACED:
         // A new value was loaded and this value was replaced
         break;
-      case RemovalCause.SIZE:
+      case RemovalReason.SIZE:
         // A value was evicted from the cache because the max size has been reached
         break;
-      case RemovalCause.EXPIRED:
+      case RemovalReason.EXPIRED:
         // A value was removed because it expired due to its max age
         break;
     }
