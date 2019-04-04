@@ -5,7 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/aholstenson/transitory/badge.svg)](https://coveralls.io/github/aholstenson/transitory)
 [![Dependencies](https://david-dm.org/aholstenson/transitory.svg)](https://david-dm.org/aholstenson/transitory)
 
-Transitory is a in-memory cache for Node and the browser, with high hit rates
+Transitory is an in-memory cache for Node and browsers, with high hit rates
 using eviction based on frequency and recency. Additional cache layers support 
 time-based expiration, automatic loading and metrics.
 
