@@ -1,6 +1,6 @@
 
 import { BoundlessCache } from '../src/cache/boundless';
-import { WrappedLoadingCache } from '../src/cache/loading';
+import { DefaultLoadingCache } from '../src/cache/loading';
 import { KeyType } from '../src/cache/key-type';
 import { Loader } from '../src/cache/loading/loader';
 
@@ -8,7 +8,7 @@ import { RemovalHelper } from './removal-helper';
 import { RemovalReason } from '../src/cache/removal-reason';
 
 function newCache<K extends KeyType, V>(loader?: Loader<K, V>) {
-	return new WrappedLoadingCache({
+	return new DefaultLoadingCache({
 		loader: loader,
 		parent: new BoundlessCache<K, V>({})
 	});

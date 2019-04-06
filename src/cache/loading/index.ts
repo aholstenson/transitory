@@ -27,7 +27,7 @@ interface LoadingCacheData<K extends KeyType, V> {
 /**
  * Extension to another cache that will load items if they are not cached.
  */
-export class WrappedLoadingCache<K extends KeyType, V> extends WrappedCache<K, V> implements LoadingCache<K, V> {
+export class DefaultLoadingCache<K extends KeyType, V> extends WrappedCache<K, V> implements LoadingCache<K, V> {
 	private [DATA]: LoadingCacheData<K, V>;
 
 	constructor(options: LoadingCacheOptions<K, V>) {
