@@ -7,7 +7,7 @@ import { AbstractCache } from '../abstract';
 import { RemovalListener } from '../removal-listener';
 import { RemovalReason } from '../removal-reason';
 
-import { Metrics } from '../metrics';
+import { Metrics } from '../metrics/metrics';
 
 import { ON_REMOVE, ON_EVICT, TRIGGER_REMOVE, EVICT } from '../symbols';
 

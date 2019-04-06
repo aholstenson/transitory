@@ -4,7 +4,7 @@ import { Cache } from './cache';
 import { CacheSPI } from './cache-spi';
 import { AbstractCache } from './abstract';
 
-import { Metrics } from './metrics';
+import { Metrics } from './metrics/metrics';
 import { RemovalListener } from './removal-listener';
 
 import { ON_REMOVE, ON_EVICT, TRIGGER_REMOVE } from './symbols';

@@ -3,7 +3,7 @@ import { KeyType } from '../key-type';
 import { Cache } from '../cache';
 import { WrappedCache } from '../wrapped';
 
-import { Metrics } from '../metrics';
+import { Metrics } from './metrics';
 import { CommonCacheOptions } from '../common-options';
 
 const METRICS = Symbol('metrics');

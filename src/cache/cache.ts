@@ -1,5 +1,5 @@
 import { KeyType } from './key-type';
-import { Metrics } from './metrics';
+import { Metrics } from './metrics/metrics';
 
 /**
  * Cache for a mapping between keys and values.

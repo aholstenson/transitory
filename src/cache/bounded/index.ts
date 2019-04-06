@@ -1,7 +1,7 @@
 import { Cache } from '../cache';
 import { CacheSPI } from '../cache-spi';
 
-import { Metrics } from '../metrics';
+import { Metrics } from '../metrics/metrics';
 import { CountMinSketch } from './sketch';
 
 import { ON_REMOVE, ON_EVICT, TRIGGER_REMOVE, EVICT } from '../symbols';

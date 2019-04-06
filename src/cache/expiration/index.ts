@@ -5,7 +5,7 @@ import { CommonCacheOptions } from '../common-options';
 import { CacheSPI } from '../cache-spi';
 import { AbstractCache } from '../abstract';
 
-import { Metrics } from '../metrics';
+import { Metrics } from '../metrics/metrics';
 import { Expirable } from './expirable';
 import { RemovalListener } from '../removal-listener';
 import { RemovalReason } from '../removal-reason';
