@@ -23,6 +23,18 @@ cache.set(1234, 'any value');
 const value = cache.getIfPresent('key');
 ```
 
+Using TypeScript:
+
+```typescript
+import { newCache, BoundlessCache } from 'transitory';
+
+const cache: Cache<string, number> = newCache()
+  .maxSize(1000)
+  .build();
+
+const cacheWithoutBuilder = new BoundlessCache<string, number>({});
+```
+
 ## Supported features
 
 * Limiting cache size to a total number of items
@@ -139,15 +151,55 @@ Calls on the builder can be chained:
 newCache().maxSize(100).loading().build();
 ```
 
+Or using caches directly for tree-shaking and better bundle sizes:
+
+```javascript
+import { BoundedCache, ExpirationCache } from 'transitory';
+
+const cache = new ExpirationCache({
+  maxWriteAge: 60000,
+  parent: new BoundedCache({
+    maxSize: 1000
+  })
+});
+```
+
+## Unlimited size cache
+
+It's possible to create a cache without any limits, in which it acts like a
+standard `Map`.
+
+```javascript
+// Using the builder
+const cache = newCache()
+  .build();
+
+// Using caches directly
+import { BoundlessCache } from 'transitory';
+
+const cache = new BoundlessCache({});
+```
+
+This is mostly useful if you have another layer of logic on top of it or if
+you're creating caches without the builder.
+
 ## Limiting the size of a cache
 
 Caches can be limited to a certain size. This type of cache will evict the
 least frequently used items when it reaches its maximum size.
 
 ```javascript
+// Using the builder
 const cache = newCache()
   .maxSize(100)
   .build();
+
+// Using caches directly
+import { BoundedCache } from 'transitory';
+
+const cache = new BoundedCache({
+  maxSize: 100
+});
 ```
 
 It is also possible to change how the size of each entry in the cache is
@@ -155,10 +207,19 @@ calculated. This can be used to create a better cache if your entries vary in
 their size in memory.
 
 ```javascript
+// Using the builder
 const cache = newCache()
   .maxSize(2000)
   .withWeigher((key, value) => value.length)
   .build();
+
+// Using caches directly
+import { BoundedCache } from 'transitory';
+
+const cache = new BoundedCache({
+  maxSize: 2000,
+  weigher: (key, value) => value.length
+});
 ```
 
 The size of an entry is evaluated when it is added to the cache so weighing
@@ -182,6 +243,7 @@ are lazy evaluated and will be removed when the values are set or deleted from
 the cache.
 
 ```javascript
+// Using the builder
 const cache = newCache()
   .expireAfterWrite(5000) // 5 seconds
   .expireAfterRead(1000) // Values need to be read at least once a second
@@ -192,10 +254,25 @@ Both methods can also take a function that should return the maximum age
 of the entry in milliseconds:
 
 ```javascript
+// Using the builder
 const cache = newCache()
   .expireAfterWrite((key, value) => 5000)
   .expireAfterRead((key, value) => 5000 / key.length)
   .build();
+```
+
+Using caches directly requires a parent cache and that functions are always
+passed:
+
+```javascript
+import { BoundlessCache } from 'transitory';
+
+const cache = new ExpirationCache({
+  maxWriteAge: () => 5000,
+  maxNoReadAge: () => 1000,
+
+  parent: new BoundlessCache({});
+});
 ```
 
 ## Loading caches
@@ -206,10 +283,24 @@ This type of caches relies heavily on the use of promises.
 With a global loader:
 
 ```javascript
+// Using the builder
 const cache = newCache()
   .withLoader(key => loadSlowData(key))
   .done();
 
+// Using caches directly
+import { DefaultLoadingCache } from 'transitory';
+
+const cache = new DefaultLoadingCache({
+  loader: key => loadSlowData(key),
+  parent: new BoundlessCache({}) // or any other cache
+});
+```
+
+Using a global loader is done by calling `cache.get(key)`, which returns a
+promise:
+
+```javascript
 cache.get(781)
   .then(data => handleLoadedData(data))
   .catch(err => handleError(err));
@@ -220,10 +311,22 @@ cache.get(1234, specialLoadingFunction)
 Without a global loader:
 
 ```javascript
+// Using the builder
 const cache = newCache()
   .loading()
   .done();
 
+// Using caches directly
+import { DefaultLoadingCache } from 'transitory';
+
+const cache = new DefaultLoadingCache({
+  parent: new BoundlessCache({}) // or any other cache
+});
+```
+
+Use via `cache.get(key, functionToLoadData)`:
+
+```javascript
 cache.get(781, key => loadSlowData(key))
   .then(data => handleLoadedData(data))
   .catch(err => handleError(err));
@@ -236,10 +339,22 @@ Loading caches can be combined with other things such as `maxSize`.
 You can track the hit rate of the cache by activating support for metrics:
 
 ```javascript
+// Using the builder
 const cache = newCache()
   .metrics()
   .done();
 
+// Using caches directly
+import { MetricsCache } from 'transitory';
+
+const cache = new MetricsCache({
+  parent: new BoundlessCache({})
+});
+```
+
+Fetching metrics:
+
+```javascript
 const metrics = cache.metrics;
 
 console.log('hitRate=', metrics.hitRate);
@@ -254,6 +369,7 @@ the cache are removed.
 
 ```javascript
 import { RemovalReason } from 'transitory';
+
 const cache = newCache()
   .withRemovalListener((key, value, reason) => {
     switch(reason) {
@@ -272,4 +388,16 @@ const cache = newCache()
     }
   })
   .build();
+```
+
+When using caches directly the removal listener should go on the final cache:
+
+```javascript
+import { LoadingCache, BoundlessCache } from 'transitory';
+
+const cache = new LoadingCache({
+  removalListener: listenerFunction,
+
+  parent: new BoundlessCache({})
+});
 ```
