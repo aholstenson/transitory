@@ -1,4 +1,4 @@
-import { CacheBuilderImpl } from '../src/builder';
+import { CacheBuilderImpl } from '../src/builder/unified-builder';
 import { AbstractCache } from '../src/cache/abstract';
 
 describe('Builder', function() {
