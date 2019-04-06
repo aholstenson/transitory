@@ -1,17 +1,16 @@
-import { Cache } from './cache/cache';
-import { BoundedCache } from './cache/bounded';
-import { KeyType } from './cache/key-type';
-import { RemovalReason } from './cache/removal-reason';
-import { BoundlessCache } from './cache/boundless';
-import { Weigher } from './cache/weigher';
-import { WrappedLoadingCache } from './cache/loading';
-import { ExpirationCache } from './cache/expiration';
-import { MetricsCache } from './cache/metrics/index';
-import { RemovalListener } from './cache/removal-listener';
-import { Loader } from './cache/loading/loader';
-import { MaxAgeDecider } from './cache/expiration/max-age-decider';
-import { LoadingCache } from './cache/loading/loading-cache';
-import { Expirable } from './cache/expiration/expirable';
+import { Cache } from '../cache/cache';
+import { BoundedCache } from '../cache/bounded';
+import { KeyType } from '../cache/key-type';
+import { BoundlessCache } from '../cache/boundless';
+import { Weigher } from '../cache/weigher';
+import { DefaultLoadingCache } from '../cache/loading';
+import { ExpirationCache } from '../cache/expiration';
+import { MetricsCache } from '../cache/metrics/index';
+import { RemovalListener } from '../cache/removal-listener';
+import { Loader } from '../cache/loading/loader';
+import { MaxAgeDecider } from '../cache/expiration/max-age-decider';
+import { LoadingCache } from '../cache/loading/loading-cache';
+import { Expirable } from '../cache/expiration/expirable';
 
 export interface CacheBuilder<K extends KeyType, V> {
 	/**
@@ -217,7 +216,9 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 
 		if(this.optMetrics) {
 			// Collect metrics if requested
-			cache = new MetricsCache(cache);
+			cache = new MetricsCache({
+				parent: cache
+			});
 		}
 
 		return cache;
@@ -272,7 +273,7 @@ class LoadingCacheBuilderImpl<K extends KeyType, V> implements LoadingCacheBuild
 	}
 
 	public build(): LoadingCache<K, V> {
-		return new WrappedLoadingCache({
+		return new DefaultLoadingCache({
 			loader: this.loader,
 
 			parent: this.parent.build()

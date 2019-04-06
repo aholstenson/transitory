@@ -1,6 +1,7 @@
 import { KeyType } from '../key-type';
 
 import { Cache } from '../cache';
+import { CommonCacheOptions } from '../common-options';
 import { WrappedCache } from '../wrapped';
 
 import { LoadingCache } from './loading-cache';
@@ -11,7 +12,7 @@ const DATA = Symbol('loadingData');
 /**
  * Options available for a loading cache.
  */
-export interface LoadingCacheOptions<K extends KeyType, V> {
+export interface LoadingCacheOptions<K extends KeyType, V> extends CommonCacheOptions<K, V> {
 	loader?: Loader<K, V> | undefined | null;
 
 	parent: Cache<K, V>;
@@ -30,7 +31,7 @@ export class WrappedLoadingCache<K extends KeyType, V> extends WrappedCache<K, V
 	private [DATA]: LoadingCacheData<K, V>;
 
 	constructor(options: LoadingCacheOptions<K, V>) {
-		super(options.parent);
+		super(options.parent, options.removalListener || null);
 
 		this[DATA] = {
 			promises: new Map(),

@@ -4,8 +4,16 @@ import { Cache } from '../cache';
 import { WrappedCache } from '../wrapped';
 
 import { Metrics } from '../metrics';
+import { CommonCacheOptions } from '../common-options';
 
 const METRICS = Symbol('metrics');
+
+/**
+ * Options available for a metrics cache.
+ */
+export interface MetricsCacheOptions<K extends KeyType, V> extends CommonCacheOptions<K, V> {
+	parent: Cache<K, V>;
+}
 
 /**
  * Extension to a cache that tracks metrics about the size and hit rate of
@@ -14,8 +22,8 @@ const METRICS = Symbol('metrics');
 export class MetricsCache<K extends KeyType, V> extends WrappedCache<K, V> {
 	private [METRICS]: Metrics;
 
-	constructor(parent: Cache<K, V>) {
-		super(parent);
+	constructor(options: MetricsCacheOptions<K, V>) {
+		super(options.parent, options.removalListener || null);
 
 		this[METRICS] = {
 			hits: 0,

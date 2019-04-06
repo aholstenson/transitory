@@ -1,6 +1,7 @@
 import { KeyType } from '../key-type';
 
 import { Cache } from '../cache';
+import { CommonCacheOptions } from '../common-options';
 import { CacheSPI } from '../cache-spi';
 import { AbstractCache } from '../abstract';
 
@@ -19,11 +20,9 @@ const DATA = Symbol('expirationData');
 /**
  * Options available for a loading cache.
  */
-export interface ExpirationCacheOptions<K extends KeyType, V> {
+export interface ExpirationCacheOptions<K extends KeyType, V> extends CommonCacheOptions<K, V> {
 	maxWriteAge?: MaxAgeDecider<K, V>;
 	maxNoReadAge?: MaxAgeDecider<K, V>;
-
-	removalListener?: RemovalListener<K, V> | null;
 
 	parent: Cache<K, Expirable<V>>;
 }

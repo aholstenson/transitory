@@ -3,9 +3,14 @@ import { KeyType } from '../src/cache/key-type';
 import { BoundlessCache } from '../src/cache/boundless';
 import { MetricsCache } from '../src/cache/metrics/index';
 
+import { RemovalHelper } from './removal-helper';
+import { RemovalReason } from '../src/cache/removal-reason';
+
 function newCache<K extends KeyType, V>() {
-	return new MetricsCache(new BoundlessCache<K, V>({}));
-};
+	return new MetricsCache({
+		parent: new BoundlessCache<K, V>({})
+	});
+}
 
 describe('MetricsCache', function() {
 	it('Can create', function() {
@@ -52,5 +57,55 @@ describe('MetricsCache', function() {
 		expect(cache.metrics.hits).toEqual(0);
 		expect(cache.metrics.misses).toEqual(0);
 		expect(cache.metrics.hitRate).toEqual(1);
+	});
+
+	describe('Removal listeners', function() {
+		it('Triggers on delete', function() {
+			const removal = new RemovalHelper<string, number>();
+			const cache = new BoundlessCache<string, number>({
+				removalListener: removal.listener
+			});
+
+			cache.set('one', 1234);
+			expect(removal.didRemove).toEqual(false);
+
+			cache.delete('one');
+			expect(removal.didRemove).toEqual(true);
+			expect(removal.removedKey).toEqual('one');
+			expect(removal.removedValue).toEqual(1234);
+			expect(removal.removalReason).toEqual(RemovalReason.EXPLICIT);
+		});
+
+		it('Triggers on set', function() {
+			const removal = new RemovalHelper<string, number>();
+			const cache = new BoundlessCache<string, number>({
+				removalListener: removal.listener
+			});
+
+			cache.set('one', 1234);
+			expect(removal.didRemove).toEqual(false);
+
+			cache.set('one', 4321);
+			expect(removal.didRemove).toEqual(true);
+			expect(removal.removedKey).toEqual('one');
+			expect(removal.removedValue).toEqual(1234);
+			expect(removal.removalReason).toEqual(RemovalReason.REPLACED);
+		});
+
+		it('Triggers on clear', function() {
+			const removal = new RemovalHelper<string, number>();
+			const cache = new BoundlessCache<string, number>({
+				removalListener: removal.listener
+			});
+
+			cache.set('one', 1234);
+			expect(removal.didRemove).toEqual(false);
+
+			cache.clear();
+			expect(removal.didRemove).toEqual(true);
+			expect(removal.removedKey).toEqual('one');
+			expect(removal.removedValue).toEqual(1234);
+			expect(removal.removalReason).toEqual(RemovalReason.EXPLICIT);
+		});
 	});
 });

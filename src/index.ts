@@ -23,9 +23,4 @@ export { MaxAgeDecider } from './cache/expiration/max-age-decider';
 
 export { memoryEstimator } from './utils/memoryEstimator';
 
-/**
- * Create a new cache via a builder.
- */
-export function newCache<K extends KeyType, V>(): CacheBuilder<K, V> {
-	return new CacheBuilderImpl<K, V>();
-}
+export * from './builder';

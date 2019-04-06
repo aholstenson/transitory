@@ -7,9 +7,11 @@ import { AbstractCache } from './abstract';
 import { Metrics } from './metrics';
 import { RemovalListener } from './removal-listener';
 
-import { ON_REMOVE, ON_EVICT } from './symbols';
+import { ON_REMOVE, ON_EVICT, TRIGGER_REMOVE } from './symbols';
+import { RemovalReason } from './removal-reason';
 
 const PARENT = Symbol('parent');
+const REMOVAL_LISTENER = Symbol('removalListener');
 
 /**
  * Wrapper for another cache, used to extend that cache with new behavior,
@@ -18,10 +20,17 @@ const PARENT = Symbol('parent');
 export abstract class WrappedCache<K extends KeyType, V> extends AbstractCache<K, V> implements Cache<K, V>, CacheSPI<K, V> {
 	private [PARENT]: Cache<K, V> & CacheSPI<K, V>;
 
-	constructor(parent: Cache<K, V> & CacheSPI<K, V>) {
+	public [ON_REMOVE]?: RemovalListener<K, V>;
+	private [REMOVAL_LISTENER]: RemovalListener<K, V> | null;
+
+	constructor(parent: Cache<K, V> & CacheSPI<K, V>, removalListener: RemovalListener<K, V> | null) {
 		super();
 
 		this[PARENT] = parent;
+		this[REMOVAL_LISTENER] = removalListener;
+
+		// Custom onRemove handler for the parent cache
+		this[PARENT][ON_REMOVE] = this[TRIGGER_REMOVE].bind(this);
 	}
 
 	get maxSize(): number {
@@ -72,19 +81,25 @@ export abstract class WrappedCache<K extends KeyType, V> extends AbstractCache<K
 		return this[PARENT].metrics;
 	}
 
-	public get [ON_REMOVE](): RemovalListener<K, V> | undefined {
-		return this[PARENT][ON_REMOVE];
-	}
-
-	public set [ON_REMOVE](listener: RemovalListener<K, V> | undefined) {
-		this[PARENT][ON_REMOVE] = listener;
-	}
-
 	public get [ON_EVICT](): (() => void) | undefined {
 		return this[PARENT][ON_EVICT];
 	}
 
 	public set [ON_EVICT](listener: (() => void) | undefined) {
 		this[PARENT][ON_EVICT] = listener;
+	}
+
+	private [TRIGGER_REMOVE](key: K, value: V, reason: RemovalReason) {
+		// Trigger any extended remove listeners
+		const onRemove = this[ON_REMOVE];
+		if(onRemove) {
+			onRemove(key, value, reason);
+		}
+
+		// Trigger the removal listener
+		const listener = this[REMOVAL_LISTENER];
+		if(listener) {
+			listener(key, value, reason);
+		}
 	}
 }
