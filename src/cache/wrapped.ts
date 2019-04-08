@@ -7,7 +7,7 @@ import { AbstractCache } from './abstract';
 import { Metrics } from './metrics/metrics';
 import { RemovalListener } from './removal-listener';
 
-import { ON_REMOVE, ON_EVICT, TRIGGER_REMOVE } from './symbols';
+import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE } from './symbols';
 import { RemovalReason } from './removal-reason';
 
 const PARENT = Symbol('parent');
@@ -81,12 +81,12 @@ export abstract class WrappedCache<K extends KeyType, V> extends AbstractCache<K
 		return this[PARENT].metrics;
 	}
 
-	public get [ON_EVICT](): (() => void) | undefined {
-		return this[PARENT][ON_EVICT];
+	public get [ON_MAINTENANCE](): (() => void) | undefined {
+		return this[PARENT][ON_MAINTENANCE];
 	}
 
-	public set [ON_EVICT](listener: (() => void) | undefined) {
-		this[PARENT][ON_EVICT] = listener;
+	public set [ON_MAINTENANCE](listener: (() => void) | undefined) {
+		this[PARENT][ON_MAINTENANCE] = listener;
 	}
 
 	private [TRIGGER_REMOVE](key: K, value: V, reason: RemovalReason) {

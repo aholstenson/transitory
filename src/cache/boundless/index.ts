@@ -9,7 +9,7 @@ import { RemovalReason } from '../removal-reason';
 
 import { Metrics } from '../metrics/metrics';
 
-import { ON_REMOVE, ON_EVICT, TRIGGER_REMOVE, EVICT } from '../symbols';
+import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE, MAINTENANCE } from '../symbols';
 
 const DATA = Symbol('boundlessData');
 
@@ -43,7 +43,7 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 	private [DATA]: BoundlessCacheData<K, V>;
 
 	public [ON_REMOVE]?: RemovalListener<K, V>;
-	public [ON_EVICT]?: () => void;
+	public [ON_MAINTENANCE]?: () => void;
 
 	constructor(options: BoundlessCacheOptions<K, V>) {
 		super();
@@ -88,7 +88,7 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 
 		// Schedule an eviction
 		if(! data.evictionTimeout) {
-			data.evictionTimeout = setTimeout(() => this[EVICT](), EVICTION_DELAY);
+			data.evictionTimeout = setTimeout(() => this[MAINTENANCE](), EVICTION_DELAY);
 		}
 
 		// Return the value we replaced
@@ -130,7 +130,7 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 
 			// Queue an eviction event if one is not set
 			if(! data.evictionTimeout) {
-				data.evictionTimeout = setTimeout(() => this[EVICT](), EVICTION_DELAY);
+				data.evictionTimeout = setTimeout(() => this[MAINTENANCE](), EVICTION_DELAY);
 			}
 
 			return old;
@@ -167,7 +167,7 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 	 * Get all of the keys currently in the cache.
 	 */
 	public keys() {
-		this[EVICT]();
+		this[MAINTENANCE]();
 		return Array.from(this[DATA].values.keys());
 	}
 
@@ -176,7 +176,7 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 	 */
 	public cleanUp() {
 		// Simply request eviction so extra layers can handle this
-		this[EVICT]();
+		this[MAINTENANCE]();
 	}
 
 	get metrics(): Metrics {
@@ -197,9 +197,9 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 		}
 	}
 
-	private [EVICT]() {
+	private [MAINTENANCE]() {
 		// Trigger the onEvict listener if one exists
-		const onEvict = this[ON_EVICT];
+		const onEvict = this[ON_MAINTENANCE];
 		if(onEvict) {
 			onEvict();
 		}

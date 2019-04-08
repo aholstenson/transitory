@@ -4,7 +4,7 @@ import { CacheSPI } from '../cache-spi';
 import { Metrics } from '../metrics/metrics';
 import { CountMinSketch } from './sketch';
 
-import { ON_REMOVE, ON_EVICT, TRIGGER_REMOVE, EVICT } from '../symbols';
+import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE, MAINTENANCE } from '../symbols';
 
 import { RemovalReason } from '../removal-reason';
 import { CacheNode } from '../cache-node';
@@ -60,9 +60,9 @@ interface BoundedCacheData<K extends KeyType, V> {
 	sketch: CountMinSketch;
 	sketchGrowLimit: number;
 
-	evictionTimeout: any;
+	maintenanceTimeout: any;
 	forceEvictionLimit: number;
-	evictionInterval: number;
+	maintenanceInterval: number;
 
 	window: CacheSection<K, V>;
 	protected: CacheSection<K, V>;
@@ -89,7 +89,7 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 	private [DATA]: BoundedCacheData<K, V>;
 
 	public [ON_REMOVE]?: RemovalListener<K, V>;
-	public [ON_EVICT]?: () => void;
+	public [ON_MAINTENANCE]?: () => void;
 
 	constructor(options: BoundedCacheOptions<K, V>) {
 		super();
@@ -104,6 +104,8 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		 * of the graph.
 		 */
 		const sketchWidth = options.weigher ? 256 : Math.max(options.maxSize, 128);
+
+		this[MAINTENANCE] = this[MAINTENANCE].bind(this);
 
 		this[DATA] = {
 			maxSize: options.weigher ? -1 : options.maxSize,
@@ -137,12 +139,12 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 				head: new BoundedNode<K, V>(null, null),
 			},
 
-			// Timeout used to schedule evictions
-			evictionTimeout: 0,
+			// Timeout used to schedule maintenance
+			maintenanceTimeout: null,
 			// The maximum size we can temporarily be grow before an eviction is forced
 			forceEvictionLimit: options.maxSize + Math.max(Math.floor(options.maxSize * percentOverflow), 5),
 			// The time to wait before an eviction is triggered by a set
-			evictionInterval: 5000
+			maintenanceInterval: 5000
 		};
 	}
 
@@ -221,9 +223,9 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 
 		// Schedule eviction
 		if(data.weightedSize >= data.forceEvictionLimit) {
-			this[EVICT]();
-		} else if(! data.evictionTimeout) {
-			data.evictionTimeout = setTimeout(() => this[EVICT](), data.evictionInterval);
+			this[MAINTENANCE]();
+		} else if(! data.maintenanceTimeout) {
+			data.maintenanceTimeout = setTimeout(this[MAINTENANCE], data.maintenanceInterval);
 		}
 
 		// Return the value we replaced
@@ -320,8 +322,8 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 
 			this[TRIGGER_REMOVE](key, node.value, RemovalReason.EXPLICIT);
 
-			if(! data.evictionTimeout) {
-				data.evictionTimeout = setTimeout(() => this[EVICT](), data.evictionInterval);
+			if(! data.maintenanceTimeout) {
+				data.maintenanceTimeout = setTimeout(this[MAINTENANCE], data.maintenanceInterval);
 			}
 
 			return node.value;
@@ -356,19 +358,19 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		data.protected.head.remove();
 		data.protected.size = 0;
 
-		if(data.evictionTimeout) {
-			clearTimeout(data.evictionTimeout);
-			data.evictionTimeout = null;
+		if(data.maintenanceTimeout) {
+			clearTimeout(data.maintenanceTimeout);
+			data.maintenanceTimeout = null;
 		}
 	}
 
 	public keys(): K[] {
-		this[EVICT]();
+		this[MAINTENANCE]();
 		return Array.from(this[DATA].values.keys());
 	}
 
 	public cleanUp() {
-		this[EVICT]();
+		this[MAINTENANCE]();
 	}
 
 	get metrics(): Metrics {
@@ -390,7 +392,20 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		}
 	}
 
-	private [EVICT]() {
+	private [MAINTENANCE]() {
+		/*
+		 * Trigger the onMaintenance listener if one exists. This is done
+		 * before eviction occurs so that extra layers have a chance to
+		 * apply their own eviction rules.
+		 *
+		 * This can be things such as things being removed because they have
+		 * been expired which in turn might cause eviction to be unnecessary.
+		 */
+		const onMaintenance = this[ON_MAINTENANCE];
+		if(onMaintenance) {
+			onMaintenance();
+		}
+
 		const data = this[DATA];
 
 		/*
@@ -455,15 +470,9 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 			this[TRIGGER_REMOVE](toRemove.key, toRemove.value, RemovalReason.SIZE);
 		}
 
-		// Trigger the onEvict listener if one exists
-		const onEvict = this[ON_EVICT];
-		if(onEvict) {
-			onEvict();
-		}
-
-		if(data.evictionTimeout) {
-			clearTimeout(data.evictionTimeout);
-			data.evictionTimeout = null;
+		if(data.maintenanceTimeout) {
+			clearTimeout(data.maintenanceTimeout);
+			data.maintenanceTimeout = null;
 		}
 	}
 }

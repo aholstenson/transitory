@@ -13,9 +13,9 @@ export const TRIGGER_REMOVE = Symbol('triggerRemove');
 /**
  * SPI extension for listening to eviction events.
  */
-export const ON_EVICT = Symbol('onEvict');
+export const ON_MAINTENANCE = Symbol('onMaintenance');
 
 /**
- * Shared symbol used for common code related to eviction.
+ * Shared symbol used for common code related to maintenace.
  */
-export const EVICT = Symbol('evict');
+export const MAINTENANCE = Symbol('maintenance');

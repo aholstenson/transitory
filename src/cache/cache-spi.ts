@@ -1,7 +1,7 @@
 import { KeyType } from './key-type';
 import { RemovalListener } from './removal-listener';
 
-import { ON_REMOVE, ON_EVICT } from './symbols';
+import { ON_REMOVE, ON_MAINTENANCE } from './symbols';
 
 /**
  * Type not part of the public API, used by caches and their layers as their
@@ -15,8 +15,8 @@ export interface CacheSPI<K extends KeyType, V> {
 	[ON_REMOVE]?: RemovalListener<K, V>;
 
 	/**
-	 * Called when eviction occurs in the cache. Can be used by layers to
-	 * perform extra tasks during eviction, such as expiring items.
+	 * Called when maintenance occurs in the cache. Can be used by layers to
+	 * perform extra tasks during maintenance windows, such as expiring items.
 	 */
-	[ON_EVICT]?: () => void;
+	[ON_MAINTENANCE]?: () => void;
 }

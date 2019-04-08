@@ -13,7 +13,7 @@ import { RemovalReason } from '../removal-reason';
 import { TimerWheel, TimerNode } from './timer-wheel';
 import { MaxAgeDecider } from './max-age-decider';
 
-import { PARENT, ON_REMOVE, TRIGGER_REMOVE, ON_EVICT } from '../symbols';
+import { PARENT, ON_REMOVE, TRIGGER_REMOVE, ON_MAINTENANCE, MAINTENANCE } from '../symbols';
 
 const DATA = Symbol('expirationData');
 
@@ -46,6 +46,7 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 	private [PARENT]: Cache<K, Expirable<V>> & CacheSPI<K, Expirable<V>>;
 
 	public [ON_REMOVE]?: RemovalListener<K, V>;
+	public [ON_MAINTENANCE]?: () => void;
 
 	constructor(options: ExpirationCacheOptions<K, V>) {
 		super();
@@ -75,8 +76,8 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 			this[TRIGGER_REMOVE](key, node.value as V, reason);
 		};
 
-		// Custom eviction behaviour to advance the wheel
-		this[PARENT][ON_EVICT] = () => this[DATA].timerWheel.advance();
+		// Custom maintenance behaviour to advance the wheel
+		this[PARENT][ON_MAINTENANCE] = this[MAINTENANCE].bind(this);
 	}
 
 	get maxSize(): number {
@@ -172,12 +173,13 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 		return this[PARENT].metrics;
 	}
 
-	get [ON_EVICT](): (() => void) | undefined {
-		return this[PARENT][ON_EVICT];
-	}
+	private [MAINTENANCE]() {
+		this[DATA].timerWheel.advance();
 
-	set [ON_EVICT](listener: (() => void) | undefined) {
-		this[PARENT][ON_EVICT] = listener;
+		const onMaintenance = this[ON_MAINTENANCE];
+		if(onMaintenance) {
+			onMaintenance();
+		}
 	}
 
 	private [TRIGGER_REMOVE](key: K, value: V, reason: RemovalReason) {
