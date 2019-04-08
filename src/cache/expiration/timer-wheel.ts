@@ -121,7 +121,7 @@ export class TimerWheel<K extends KeyType, V> {
 						// Find a new bucket to put this node in
 						const b = this.findBucket(node);
 						if(b) {
-							node.append(b);
+							node.appendToTail(b);
 						}
 					}
 					node = next;
@@ -155,7 +155,7 @@ export class TimerWheel<K extends KeyType, V> {
 		const parent = this.findBucket(node);
 		if(! parent) return false;
 
-		node.append(parent);
+		node.appendToTail(parent);
 		return true;
 	}
 

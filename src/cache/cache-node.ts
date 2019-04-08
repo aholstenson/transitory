@@ -22,7 +22,7 @@ export class CacheNode<K, V> {
 		this.next = this.previous = this;
 	}
 
-	public append(head: this) {
+	public appendToTail(head: this) {
 		const tail = head.previous;
 		head.previous = this;
 		tail.next = this;
@@ -30,8 +30,8 @@ export class CacheNode<K, V> {
 		this.previous = tail;
 	}
 
-	public move(head: this) {
+	public moveToTail(head: this) {
 		this.remove();
-		this.append(head);
+		this.appendToTail(head);
 	}
 }

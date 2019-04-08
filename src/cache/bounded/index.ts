@@ -213,7 +213,7 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		}
 
 		// Append the new node to the window space
-		node.append(data.window.head);
+		node.appendToTail(data.window.head);
 		data.window.size += node.weight;
 
 		// Register access to the key
@@ -253,31 +253,31 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		switch(node.location) {
 			case Location.WINDOW:
 				// In window cache, mark as most recently used
-				node.move(data.window.head);
+				node.moveToTail(data.window.head);
 				break;
 			case Location.PROBATION:
 				// In SLRU probation segment, move to protected
 				node.location = Location.PROTECTED;
-				node.move(data.protected.head);
+				node.moveToTail(data.protected.head);
 
 				// Plenty of room, keep track of the size
 				data.protected.size += node.weight;
 
 				while(data.protected.size > data.protected.maxSize) {
 					/*
-						* There is now too many nodes in the protected segment
-						* so demote the least recently used.
-						*/
+					 * There is now too many nodes in the protected segment
+					 * so demote the least recently used.
+					 */
 					const lru = data.protected.head.next;
 					lru.location = Location.PROBATION;
-					lru.move(data.probation.head);
+					lru.moveToTail(data.probation.head);
 					data.protected.size -= lru.weight;
 				}
 
 				break;
 			case Location.PROTECTED:
 				// SLRU protected segment, mark as most recently used
-				node.move(data.protected.head);
+				node.moveToTail(data.protected.head);
 				break;
 		}
 
@@ -401,7 +401,7 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		while(data.window.size > data.window.maxSize) {
 			const first = data.window.head.next;
 
-			first.move(data.probation.head);
+			first.moveToTail(data.probation.head);
 			first.location = Location.PROBATION;
 
 			data.window.size -= first.weight;
