@@ -28,15 +28,17 @@ function safeishMultiply(a: number, b: number) {
  *    have been made.
  */
 export class CountMinSketch {
-	private width: number;
-	private depth: number;
-	private maxSize: number;
+	private readonly width: number;
+	private readonly depth: number;
+
+	public readonly maxSize: number;
+	public readonly halfMaxSize: number;
+	public readonly slightlyLessThanHalfMaxSize: number;
 
 	private additions: number;
 	private resetAfter: number;
 
 	private table: Uint8Array;
-	private random: number;
 
 	constructor(width: number, depth: number, decay: boolean) {
 		this.width = toPowerOfN(width);
@@ -44,6 +46,8 @@ export class CountMinSketch {
 
 		// Get the maximum size of values, assuming unsigned ints
 		this.maxSize = Math.pow(2, Uint8Array.BYTES_PER_ELEMENT * 8) - 1;
+		this.halfMaxSize = this.maxSize / 2;
+		this.slightlyLessThanHalfMaxSize = this.halfMaxSize - Math.max(this.halfMaxSize / 4, 1);
 
 		// Track additions and when to reset
 		this.additions = 0;
@@ -51,7 +55,6 @@ export class CountMinSketch {
 
 		// Create the table to store data in
 		this.table = new Uint8Array(this.width * depth);
-		this.random = Math.floor(Math.random() * 0xffffff) | 1;
 	}
 
 	private findIndex(h1: number, h2: number, d: number) {

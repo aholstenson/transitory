@@ -429,11 +429,10 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		 */
 		while(data.weightedSize > data.weightedMaxSize) {
 			const probation = data.probation.head.next;
-			//const evicted = evictedToProbation == 0 ? null : data.probation.head.previous;
-			const evicted = evictedToProbation === 0 ? data.probation.head : data.probation.head.previous;
+			const evictedCandidate = evictedToProbation === 0 ? data.probation.head : data.probation.head.previous;
 
 			const hasProbation = probation !== data.probation.head;
-			const hasEvicted = evicted !== data.probation.head;
+			const hasEvicted = evictedCandidate !== data.probation.head;
 
 			let toRemove: BoundedNode<K, V>;
 			if(! hasProbation && ! hasEvicted) {
@@ -442,20 +441,46 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 			} else if(! hasEvicted) {
 				toRemove = probation;
 			} else if(! hasProbation) {
-				toRemove = evicted;
+				toRemove = evictedCandidate;
 
 				evictedToProbation--;
 			} else {
-				// Estimate how often the two items have been accessed
-				const freqEvicted = data.sketch.estimate(evicted.hashCode);
+				/*
+				 * Estimate how often the two items have been accessed to
+				 * determine which of the keys should actually be evicted.
+				 *
+				 * Also protect against hash collision attacks where the
+				 * frequency of an item in the cache is raised causing the
+				 * candidate to never be admitted into the cache.
+				 */
+				let removeCandidate;
+
+				const freqEvictedCandidate = data.sketch.estimate(evictedCandidate.hashCode);
 				const freqProbation = data.sketch.estimate(probation.hashCode);
 
-				if(freqEvicted > freqProbation) {
-					toRemove = probation;
+				if(freqEvictedCandidate > freqProbation) {
+					removeCandidate = false;
+				} else if(freqEvictedCandidate < data.sketch.slightlyLessThanHalfMaxSize) {
+					/*
+					 * If the frequency of the candidate is slightly less than
+					 * half it can be admitted without going through randomness
+					 * checks.
+					 *
+					 * The idea here is that will reduce the number of random
+					 * admittances.
+					 */
+					removeCandidate = true;
 				} else {
-					toRemove = evicted;
+					/*
+					 * Make it a 1 in 1000 chance that the candidate is not
+					 * removed.
+					 *
+					 * TODO: Should this be lower or higher? Please open an issue if you have thoughts on this
+					 */
+					removeCandidate = Math.floor(Math.random() * 1000) >= 1;
 				}
 
+				toRemove = removeCandidate ? evictedCandidate : probation;
 				evictedToProbation--;
 			}
 
