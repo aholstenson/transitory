@@ -17,6 +17,10 @@ const percentInMain = 0.99;
 const percentProtected = 0.8;
 const percentOverflow = 0.01;
 
+const adaptiveRestartThreshold = 0.05;
+const adaptiveStepPercent = 0.0625;
+const adaptiveStepDecayRate = 0.98;
+
 const DATA = Symbol('boundedData');
 
 /**
@@ -47,36 +51,168 @@ export interface BoundedCacheOptions<K extends KeyType, V> {
  * Data as used by the bounded cache.
  */
 interface BoundedCacheData<K extends KeyType, V> {
+	/**
+	 * Values within the cache.
+	 */
 	values: Map<K, BoundedNode<K, V>>;
 
+	/**
+	 * The maximum size of the cache or -1 if the cache uses weighing.
+	 */
 	maxSize: number;
 
+	/**
+	 * Weigher being used for this cache. Invoked to determine the weight of
+	 * an item being cached.
+	 */
 	weigher: Weigher<K, V> | null;
+	/**
+	 * Maximum size of the cache as a weight.
+	 */
 	weightedMaxSize: number;
+	/**
+	 * The current weight of all items in the cache.
+	 */
 	weightedSize: number;
 
+	/**
+	 * Listener to invoke when removals occur.
+	 */
 	removalListener: RemovalListener<K, V> | null;
 
+	/**
+	 * Sketch used to keep track of the frequency of which items are used.
+	 */
 	sketch: CountMinSketch;
+	/**
+	 * The limit at which to grow the sketch.
+	 */
 	sketchGrowLimit: number;
 
+	/**
+	 * Timeout holder for performing maintenance. When this is set it means
+	 * that a maintenance is queued for later.
+	 */
 	maintenanceTimeout: any;
+	/**
+	 * The maximum size the cache can grow without an eviction being applied
+	 * directly.
+	 */
 	forceEvictionLimit: number;
+	/**
+	 * The time in milliseconds to delay maintenance.
+	 */
 	maintenanceInterval: number;
 
+	/**
+	 * Adaptive data used to adjust the size of the window.
+	 */
+	adaptiveData: AdaptiveData;
+
+	/**
+	 * Tracking of the window cache, starts at around 1% of the total cache.
+	 */
 	window: CacheSection<K, V>;
+
+	/**
+	 * SLRU protected segment, 80% * (100% - windowSize) of the total cache
+	 */
 	protected: CacheSection<K, V>;
+
+	/**
+	 * SLRU probation segment, 20% * (100% - windowSize) of the total cache
+	 */
 	probation: ProbationSection<K, V>;
 }
 
+/**
+ * Node in a double-linked list used for the segments within the cache.
+ */
+class BoundedNode<K extends KeyType, V> extends CacheNode<K, V> {
+	public readonly hashCode: number;
+	public weight: number;
+	public location: Location;
+
+	constructor(key: K | null, value: V | null) {
+		super(key, value);
+
+		this.hashCode = key == null ? 0 : CountMinSketch.hash(key);
+		this.weight = 1;
+		this.location = Location.WINDOW;
+	}
+}
+
+/**
+ * Location of a node within the caches segments.
+ */
+const enum Location {
+	WINDOW = 0,
+	PROTECTED = 1,
+	PROBATION = 2
+}
+
+/**
+ * Segment within the cache including a tracker for the current size and
+ * the maximum size it can be.
+ */
 interface CacheSection<K extends KeyType, V> {
+	/**
+	 * Head of the linked list containing nodes for this segment.
+	 */
 	head: BoundedNode<K, V>;
+
+	/**
+	 * Current size of the segment. Updated whenever something is added or
+	 * removed from the segment.
+	 */
 	size: number;
+
+	/**
+	 * The maximum size of the segment. Set on creation and can then be moved
+	 * around using the adaptive adjustment.
+	 */
 	maxSize: number;
 }
 
+/**
+ * Special type for the probation segment that doesn't track its size.
+ */
 interface ProbationSection<K extends KeyType, V> {
+	/**
+	 * Head of the linked list containing nodes for this segment.
+	 */
 	head: BoundedNode<K, V>;
+}
+
+/**
+ * Data used for adaptive adjustment of the window segment.
+ */
+interface AdaptiveData {
+	/**
+	 * The adjustment left to perform, a positive number indicates that the
+	 * window size should be increased.
+	 */
+	adjustment: any;
+
+	/**
+	 * The current step size for the hill climbing.
+	 */
+	stepSize: any;
+
+	/**
+	 * The hit rate of the previous sample.
+	 */
+	previousHitRate: number;
+
+	/**
+	 * The number of this in the current sample.
+	 */
+	misses: number;
+
+	/**
+	 * The number of misses in the current sample.
+	 */
+	hits: number;
 }
 
 /**
@@ -120,30 +256,34 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 
 			values: new Map(),
 
-			// Tracking of the window cache, around 1% of the total cache
+			adaptiveData: {
+				hits: 0,
+				misses: 0,
+
+				adjustment: 0,
+
+				previousHitRate: 0,
+				stepSize: - adaptiveStepPercent * options.maxSize
+			},
+
 			window: {
 				head: new BoundedNode<K, V>(null, null),
 				size: 0,
 				maxSize: options.maxSize - maxMain
 			},
 
-			// SLRU protected segment, 80% * 99% of the total cache
 			protected: {
 				head: new BoundedNode<K, V>(null, null),
 				size: 0,
 				maxSize: Math.floor(maxMain * percentProtected)
 			},
 
-			// SLRU probation segment, 20% * 99% of the total cache
 			probation: {
 				head: new BoundedNode<K, V>(null, null),
 			},
 
-			// Timeout used to schedule maintenance
 			maintenanceTimeout: null,
-			// The maximum size we can temporarily be grow before an eviction is forced
 			forceEvictionLimit: options.maxSize + Math.max(Math.floor(options.maxSize * percentOverflow), 5),
-			// The time to wait before an eviction is triggered by a set
 			maintenanceInterval: 5000
 		};
 	}
@@ -191,7 +331,7 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 			// Remove the old node
 			old.remove();
 
-			// Ajudst weight
+			// Adjust weight
 			data.weightedSize -= old.weight;
 
 			// Update weights of where the node belonged
@@ -246,8 +386,12 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		const node = data.values.get(key);
 		if(! node) {
 			// This value does not exist in the cache
+			data.adaptiveData.misses++;
 			return null;
 		}
+
+		// Keep track of the hit
+		data.adaptiveData.hits++;
 
 		// Register access to the key
 		data.sketch.update(node.hashCode);
@@ -409,7 +553,7 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		const data = this[DATA];
 
 		/*
-		* Evict the least recently used item in the window space to the
+		* Evict the least recently used node in the window space to the
 		* probation segment until we are below the maximum size.
 		*/
 		let evictedToProbation = 0;
@@ -425,7 +569,7 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		}
 
 		/*
-		 * Evict items for real until we are below our maximum size.
+		 * Evict nodes for real until we are below our maximum size.
 		 */
 		while(data.weightedSize > data.weightedMaxSize) {
 			const probation = data.probation.head.next;
@@ -446,11 +590,11 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 				evictedToProbation--;
 			} else {
 				/*
-				 * Estimate how often the two items have been accessed to
+				 * Estimate how often the two nodes have been accessed to
 				 * determine which of the keys should actually be evicted.
 				 *
 				 * Also protect against hash collision attacks where the
-				 * frequency of an item in the cache is raised causing the
+				 * frequency of an node in the cache is raised causing the
 				 * candidate to never be admitted into the cache.
 				 */
 				let removeCandidate;
@@ -495,6 +639,9 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 			this[TRIGGER_REMOVE](toRemove.key, toRemove.value, RemovalReason.SIZE);
 		}
 
+		// Perform adaptive adjustment of size of window cache
+		adaptiveAdjustment(data);
+
 		if(data.maintenanceTimeout) {
 			clearTimeout(data.maintenanceTimeout);
 			data.maintenanceTimeout = null;
@@ -503,24 +650,226 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 }
 
 /**
- * Node in a double-linked list.
+ * Perform adaptive adjustment. This will do a simple hill climb and attempt
+ * to find the best balance between the recency and frequency parts of the
+ * cache.
+ *
+ * This is based on the work done in Caffeine and the paper Adaptive Software
+ * Cache Management by Gil Einziger, Ohad Eytan, Roy Friedman and Ben Manes.
+ *
+ * This implementation does work in chunks so that not too many nodes are
+ * moved around at once. At every maintenance interval it:
+ *
+ * 1) Checks if there are enough samples to calculate a new adjustment.
+ * 2)
+ *   Takes the current adjustment and increases or decreases the window in
+ *   chunks. At every invocation it currently moves a maximum of 1000 nodes
+ *   around.
+ *
+ * @param data
  */
-class BoundedNode<K extends KeyType, V> extends CacheNode<K, V> {
-	public readonly hashCode: number;
-	public weight: number;
-	public location: Location;
+function adaptiveAdjustment<K extends KeyType, V>(data: BoundedCacheData<K, V>) {
+	/*
+	 * Calculate the new adaptive adjustment. This might result in a
+	 * recalculation or it may skip touching the adjustment.
+	 */
+	calculateAdaptiveAdjustment(data);
 
-	constructor(key: K | null, value: V | null) {
-		super(key, value);
-
-		this.hashCode = key == null ? 0 : CountMinSketch.hash(key);
-		this.weight = 1;
-		this.location = Location.WINDOW;
+	const a = data.adaptiveData.adjustment;
+	if(a > 0) {
+		// Increase the window size if the adjustment is positive
+		increaseWindowSegmentSize(data);
+	} else if(a < 0) {
+		// Decrease the window size if the adjustment is negative
+		decreaseWindowSegmentSize(data);
 	}
 }
 
-const enum Location {
-	WINDOW = 0,
-	PROTECTED = 1,
-	PROBATION = 2
+/**
+ * Evict nodes from the protected segment to the probation segment if there
+ * are too many nodes in the protected segment.
+ *
+ * @param data
+ */
+function evictProtectedToProbation<K extends KeyType, V>(data: BoundedCacheData<K, V>) {
+	/*
+	 * Move up to 1000 nodes from the protected segment to the probation one
+	 * if the segment is over max size.
+	 */
+	let i = 0;
+	while(i++ < 1000 && data.protected.size > data.protected.maxSize) {
+		const lru = data.protected.head.next;
+		if(lru === data.protected.head) break;
+
+		lru.location = Location.PROBATION;
+		lru.moveToTail(data.probation.head);
+		data.protected.size -= lru.weight;
+	}
+}
+
+/**
+ * Calculate the adjustment to the window size. This will check if there is
+ * enough samples to do a step and if so perform a simple hill climbing to
+ * find the new adjustment.
+ *
+ * @returns
+ *   `true` if an adjustment occurred, `false` otherwise
+ */
+function calculateAdaptiveAdjustment<K extends KeyType, V>(data: BoundedCacheData<K, V>): boolean {
+	const adaptiveData = data.adaptiveData;
+	const requestCount = adaptiveData.hits + adaptiveData.misses;
+	if(requestCount < data.sketch.resetAfter) {
+		/*
+		 * Skip adjustment if the number of gets in the cache has not reached
+		 * the same size as the sketch reset.
+		 */
+		return false;
+	}
+
+	const hitRate = adaptiveData.hits / requestCount;
+	const hitRateDiff = hitRate - adaptiveData.previousHitRate;
+	const amount = hitRateDiff >= 0 ? adaptiveData.stepSize : - adaptiveData.stepSize;
+
+	let nextStep;
+	if(Math.abs(hitRateDiff) >= adaptiveRestartThreshold) {
+		nextStep = adaptiveStepPercent * data.weightedMaxSize * (amount >= 0 ? 1 : - 1);
+	} else {
+		nextStep = adaptiveStepDecayRate * amount;
+	}
+
+	// Store the adjustment, step size and previous hit rate for the next step
+	adaptiveData.adjustment = Math.floor(amount);
+	adaptiveData.stepSize = nextStep;
+	adaptiveData.previousHitRate = hitRate;
+
+	// Reset the sample data
+	adaptiveData.misses = 0;
+	adaptiveData.hits = 0;
+
+	return true;
+}
+
+/**
+ * Increase the size of the window segment. This will change increase the max
+ * size of the window segment and decrease the max size of the protected
+ * segment. The method will then move nodes from the probation and protected
+ * segment the window segment.
+ *
+ * @param data
+ */
+function increaseWindowSegmentSize<K extends KeyType, V>(data: BoundedCacheData<K, V>) {
+	if(data.protected.maxSize === 0) {
+		// Can't increase the window size anymore
+		return;
+	}
+
+	let amountLeftToAdjust = Math.min(data.adaptiveData.adjustment, data.protected.maxSize);
+	data.protected.maxSize -= amountLeftToAdjust;
+	data.window.maxSize += amountLeftToAdjust;
+
+	/*
+	 * Evict nodes from the protected are to the probation area now that it
+	 * is smaller.
+	 */
+	evictProtectedToProbation(data);
+
+	/*
+	 * Transfer up to 1000 node into the window segment.
+	 */
+	for(let i=0; i<1000; i++) {
+		let lru = data.probation.head.next;
+		if(lru === data.probation.head || lru.weight > amountLeftToAdjust) {
+			/*
+			 * Either got the probation head or the node was to big to fit.
+			 * Move on and check in the protected area.
+			 */
+			lru = data.protected.head.next;
+			if(lru === data.protected.head) {
+				// No more values to remove
+				break;
+			}
+		}
+
+		if(lru.weight > amountLeftToAdjust) {
+			/*
+			 * The node weight exceeds what is left of the adjustment.
+			 */
+			break;
+		}
+
+		amountLeftToAdjust -= lru.weight;
+
+		// Remove node from its current segment
+		if(lru.location === Location.PROTECTED) {
+			// If its protected reduce the size
+			data.protected.size -= lru.weight;
+		}
+
+		// Move to the window segment
+		lru.moveToTail(data.window.head);
+		data.window.size += lru.weight;
+		lru.location = Location.WINDOW;
+	}
+
+	/*
+	 * Keep track of the adjustment amount that is left. The next maintenance
+	 * invocation will look at this and attempt to adjust for it.
+	 */
+	data.protected.maxSize += amountLeftToAdjust;
+	data.window.maxSize -= amountLeftToAdjust;
+	data.adaptiveData.adjustment = amountLeftToAdjust;
+}
+
+/**
+ * Decrease the size of the window. This will increase the size of the
+ * protected segment while decreasing the size of the window segment. Nodes
+ * will be moved from the window segment into the probation segment, where
+ * they are later moved to the protected segment when they are accessed.
+ *
+ * @param data
+ */
+function decreaseWindowSegmentSize<K extends KeyType, V>(data: BoundedCacheData<K, V>) {
+	if(data.window.maxSize <= 1) {
+		// Can't decrease the size of the window anymore
+		return;
+	}
+
+	let amountLeftToAdjust = Math.min(-data.adaptiveData.adjustment, Math.max(data.window.maxSize - 1, 0));
+	data.window.maxSize -= amountLeftToAdjust;
+	data.protected.maxSize += amountLeftToAdjust;
+
+	/*
+	 * Transfer upp to 1000 nodes from the window segment into the probation
+	 * segment.
+	 */
+	for(let i=0; i<1000; i++) {
+		const lru = data.window.head.next;
+		if(lru === data.window.head) {
+			// No more nodes in the window segment, can't adjust anymore
+			break;
+		}
+
+		if(lru.weight > amountLeftToAdjust) {
+			/*
+			 * The node weight exceeds what is left of the change. Can't move
+			 * it around.
+			 */
+			break;
+		}
+
+		amountLeftToAdjust -= lru.weight;
+
+		// Remove node from the window
+		lru.moveToTail(data.probation.head);
+		lru.location = Location.PROBATION;
+		data.window.size -= lru.weight;
+	}
+
+	/*
+	 * Keep track of the adjustment amount that is left. The next maintenance
+	 * invocation will look at this and attempt to adjust for it.
+	 */
+	data.window.maxSize += amountLeftToAdjust;
+	data.protected.maxSize -= amountLeftToAdjust;
+	data.adaptiveData.adjustment = -amountLeftToAdjust;
 }

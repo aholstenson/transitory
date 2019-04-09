@@ -36,7 +36,7 @@ export class CountMinSketch {
 	public readonly slightlyLessThanHalfMaxSize: number;
 
 	private additions: number;
-	private resetAfter: number;
+	public readonly resetAfter: number;
 
 	private table: Uint8Array;
 
@@ -73,8 +73,8 @@ export class CountMinSketch {
 		for(let i=0, n=this.depth; i<n; i++) {
 			const idx = this.findIndex(hashCode, h2, i);
 			const v = table[idx];
-			if(v < maxSize && v === estimate) {
-				table[idx] = Math.min(v + 1, maxSize);
+			if(v + 1 < maxSize && v <= estimate) {
+				table[idx] = v + 1;
 				added = true;
 			}
 		}
