@@ -286,7 +286,7 @@ With a global loader:
 // Using the builder
 const cache = newCache()
   .withLoader(key => loadSlowData(key))
-  .done();
+  .build();
 
 // Using caches directly
 import { DefaultLoadingCache } from 'transitory';
@@ -314,7 +314,7 @@ Without a global loader:
 // Using the builder
 const cache = newCache()
   .loading()
-  .done();
+  .build();
 
 // Using caches directly
 import { DefaultLoadingCache } from 'transitory';
@@ -342,7 +342,7 @@ You can track the hit rate of the cache by activating support for metrics:
 // Using the builder
 const cache = newCache()
   .metrics()
-  .done();
+  .build();
 
 // Using caches directly
 import { MetricsCache } from 'transitory';
