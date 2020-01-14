@@ -1,6 +1,6 @@
-import { KeyType } from '../src/cache/key-type';
-import { RemovalReason } from '../src/cache/removal-reason';
-import { RemovalListener } from '../src/cache/removal-listener';
+import { KeyType } from '../src/cache/KeyType';
+import { RemovalReason } from '../src/cache/RemovalReason';
+import { RemovalListener } from '../src/cache/RemovalListener';
 
 export class RemovalHelper<K extends KeyType, V> {
 	public listener: RemovalListener<K, V>;

@@ -1,4 +1,4 @@
-import { KeyType } from '../key-type';
+import { KeyType } from '../KeyType';
 
 /**
  * Function used to load a value in the cache. Can return a promise or a

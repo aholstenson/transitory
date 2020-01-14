@@ -1,5 +1,5 @@
-import { KeyType } from '../cache/key-type';
-import { RemovalListener } from '../cache/removal-listener';
+import { KeyType } from './KeyType';
+import { RemovalListener } from './RemovalListener';
 
 /**
  * Common options for caches.

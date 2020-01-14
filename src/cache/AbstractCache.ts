@@ -1,8 +1,8 @@
-import { KeyType } from './key-type';
+import { KeyType } from './KeyType';
 
-import { Cache } from './cache';
+import { Cache } from './Cache';
 
-import { Metrics } from './metrics/metrics';
+import { Metrics } from './metrics/Metrics';
 
 /**
  * Abstract class for all cache implementations. This exists so that its

@@ -1,6 +1,6 @@
-import { KeyType } from '../src/cache/key-type';
+import { KeyType } from '../src/cache/KeyType';
 
-import { TimerWheel } from '../src/cache/expiration/timer-wheel';
+import { TimerWheel } from '../src/cache/expiration/TimerWheel';
 
 function newWheel<K extends KeyType>(array?: K[]): TimerWheel<K, number> {
 	let r = array || [];

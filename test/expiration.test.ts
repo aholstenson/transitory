@@ -1,10 +1,10 @@
 import { BoundlessCache } from '../src/cache/boundless';
 import { ExpirationCache } from '../src/cache/expiration';
-import { KeyType } from '../src/cache/key-type';
-import { Expirable } from '../src/cache/expiration/expirable';
+import { KeyType } from '../src/cache/KeyType';
+import { Expirable } from '../src/cache/expiration';
 import { RemovalHelper } from './removal-helper';
-import { RemovalListener } from '../src/cache/removal-listener';
-import { RemovalReason } from '../src/cache/removal-reason';
+import { RemovalListener } from '../src/cache/RemovalListener';
+import { RemovalReason } from '../src/cache/RemovalReason';
 
 function newCache<K extends KeyType, V>(listener?: RemovalListener<K, V>) {
 	return new ExpirationCache({

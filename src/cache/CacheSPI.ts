@@ -1,5 +1,5 @@
-import { KeyType } from './key-type';
-import { RemovalListener } from './removal-listener';
+import { KeyType } from './KeyType';
+import { RemovalListener } from './RemovalListener';
 
 import { ON_REMOVE, ON_MAINTENANCE } from './symbols';
 

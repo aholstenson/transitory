@@ -1,5 +1,5 @@
-import { CacheBuilderImpl } from '../src/builder/unified-builder';
-import { AbstractCache } from '../src/cache/abstract';
+import { CacheBuilderImpl } from '../src/builder/CacheBuilder';
+import { AbstractCache } from '../src/cache/AbstractCache';
 
 describe('Builder', function() {
 	it('Can create boundless cache', function() {

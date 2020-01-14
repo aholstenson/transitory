@@ -1,5 +1,5 @@
 import { hashcode } from './hashcode';
-import { KeyType } from '../key-type';
+import { KeyType } from '../KeyType';
 
 function toPowerOfN(n: number) {
 	return Math.pow(2, Math.ceil(Math.log(n) / Math.LN2));

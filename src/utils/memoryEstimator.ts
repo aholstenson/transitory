@@ -1,4 +1,4 @@
-import { CacheNode } from '../cache/cache-node';
+import { CacheNode } from '../cache/CacheNode';
 
 const OBJ_OVERHEAD = 4;
 

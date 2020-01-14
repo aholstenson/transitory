@@ -1,7 +1,7 @@
-import { KeyType } from '../cache/key-type';
-import { CacheBuilder, CacheBuilderImpl } from './unified-builder';
+import { KeyType } from '../cache/KeyType';
+import { CacheBuilder, CacheBuilderImpl } from './CacheBuilder';
 
-export { CacheBuilder, LoadingCacheBuilder } from './unified-builder';
+export { CacheBuilder, LoadingCacheBuilder } from './CacheBuilder';
 
 /**
  * Create a new cache via a builder.

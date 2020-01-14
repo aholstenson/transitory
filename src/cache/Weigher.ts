@@ -1,4 +1,4 @@
-import { KeyType } from './key-type';
+import { KeyType } from './KeyType';
 
 /**
  * Weigher that evaluates a key and value and returns a size.

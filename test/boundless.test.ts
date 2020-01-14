@@ -1,6 +1,6 @@
 import { BoundlessCache } from '../src/cache/boundless';
 import { RemovalHelper } from './removal-helper';
-import { RemovalReason } from '../src/cache/removal-reason';
+import { RemovalReason } from '../src/cache/RemovalReason';
 
 describe('BoundlessCache', function() {
 	it('Can create', function() {

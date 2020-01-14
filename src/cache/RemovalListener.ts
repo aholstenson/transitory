@@ -1,6 +1,6 @@
-import { KeyType } from './key-type';
+import { KeyType } from './KeyType';
 
-import { RemovalReason } from './removal-reason';
+import { RemovalReason } from './RemovalReason';
 
 /**
  * Listener for removal events. Receives the key, value and the reason it

@@ -1,6 +1,6 @@
-import { CacheNode } from '../cache-node';
-import { KeyType } from '../key-type';
-import { Expirable } from './expirable';
+import { CacheNode } from '../CacheNode';
+import { KeyType } from '../KeyType';
+import { Expirable } from './Expirable';
 
 function toPowerOfN(n: number) {
 	return Math.pow(2, Math.ceil(Math.log(n) / Math.LN2));

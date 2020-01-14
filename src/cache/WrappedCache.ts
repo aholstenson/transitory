@@ -1,14 +1,14 @@
-import { KeyType } from './key-type';
+import { KeyType } from './KeyType';
 
-import { Cache } from './cache';
-import { CacheSPI } from './cache-spi';
-import { AbstractCache } from './abstract';
+import { Cache } from './Cache';
+import { CacheSPI } from './CacheSPI';
+import { AbstractCache } from './AbstractCache';
 
-import { Metrics } from './metrics/metrics';
-import { RemovalListener } from './removal-listener';
+import { Metrics } from './metrics/Metrics';
+import { RemovalListener } from './RemovalListener';
 
 import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE } from './symbols';
-import { RemovalReason } from './removal-reason';
+import { RemovalReason } from './RemovalReason';
 
 const PARENT = Symbol('parent');
 const REMOVAL_LISTENER = Symbol('removalListener');

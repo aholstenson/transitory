@@ -1,7 +1,7 @@
 import { RemovalHelper } from './removal-helper';
 
 import { BoundedCache } from '../src/cache/bounded';
-import { RemovalReason } from '../src/cache/removal-reason';
+import { RemovalReason } from '../src/cache/RemovalReason';
 
 describe('BoundedCache', function() {
 	it('Can create', function() {

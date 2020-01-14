@@ -1,8 +1,8 @@
-import { KeyType } from '../key-type';
+import { KeyType } from '../KeyType';
 
-import { Cache } from '../cache';
+import { Cache } from '../Cache';
 
-import { Loader } from './loader';
+import { Loader } from './Loader';
 
 /**
  * Cache that also supports loading of data if it's not in the cache.

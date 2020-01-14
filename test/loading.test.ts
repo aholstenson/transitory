@@ -1,11 +1,11 @@
 
 import { BoundlessCache } from '../src/cache/boundless';
 import { DefaultLoadingCache } from '../src/cache/loading';
-import { KeyType } from '../src/cache/key-type';
-import { Loader } from '../src/cache/loading/loader';
+import { KeyType } from '../src/cache/KeyType';
+import { Loader } from '../src/cache/loading';
 
 import { RemovalHelper } from './removal-helper';
-import { RemovalReason } from '../src/cache/removal-reason';
+import { RemovalReason } from '../src/cache/RemovalReason';
 
 function newCache<K extends KeyType, V>(loader?: Loader<K, V>) {
 	return new DefaultLoadingCache({

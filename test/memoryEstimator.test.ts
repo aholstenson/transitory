@@ -1,6 +1,6 @@
 
 import { memoryEstimator } from '../src/utils/memoryEstimator';
-import { CacheNode } from '../src/cache/cache-node';
+import { CacheNode } from '../src/cache/CacheNode';
 
 describe('memoryEstimator', function() {
 	it('string', function() {

@@ -1,4 +1,4 @@
-import { KeyType } from '../key-type';
+import { KeyType } from '../KeyType';
 
 /**
  * Decider for how long something stays cached. Takes in the key and the value

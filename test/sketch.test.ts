@@ -1,5 +1,5 @@
 
-import { CountMinSketch } from '../src/cache/bounded/sketch';
+import { CountMinSketch } from '../src/cache/bounded/CountMinSketch';
 
 function hash(key: number | string) {
 	return CountMinSketch.hash(key);

@@ -1,16 +1,16 @@
-import { Cache } from '../cache/cache';
-import { BoundedCache } from '../cache/bounded';
-import { KeyType } from '../cache/key-type';
-import { BoundlessCache } from '../cache/boundless';
-import { Weigher } from '../cache/weigher';
-import { DefaultLoadingCache } from '../cache/loading';
-import { ExpirationCache } from '../cache/expiration';
-import { MetricsCache } from '../cache/metrics/index';
-import { RemovalListener } from '../cache/removal-listener';
-import { Loader } from '../cache/loading/loader';
-import { MaxAgeDecider } from '../cache/expiration/max-age-decider';
-import { LoadingCache } from '../cache/loading/loading-cache';
-import { Expirable } from '../cache/expiration/expirable';
+import { Cache } from '../cache/Cache';
+import { BoundedCache } from '../cache/bounded/BoundedCache';
+import { KeyType } from '../cache/KeyType';
+import { BoundlessCache } from '../cache/boundless/BoundlessCache';
+import { Weigher } from '../cache/Weigher';
+import { DefaultLoadingCache } from '../cache/loading/DefaultLoadingCache';
+import { ExpirationCache } from '../cache/expiration/ExpirationCache';
+import { MetricsCache } from '../cache/metrics/MetricsCache';
+import { RemovalListener } from '../cache/RemovalListener';
+import { Loader } from '../cache/loading/Loader';
+import { MaxAgeDecider } from '../cache/expiration/MaxAgeDecider';
+import { LoadingCache } from '../cache/loading/LoadingCache';
+import { Expirable } from '../cache/expiration/Expirable';
 
 export interface CacheBuilder<K extends KeyType, V> {
 	/**
