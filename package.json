@@ -26,15 +26,15 @@
     "lru"
   ],
   "devDependencies": {
-    "@types/jest": "^24.0.23",
-    "@types/node": "^12.12.16",
+    "@types/jest": "^24.0.25",
+    "@types/node": "^13.1.6",
     "coveralls": "^3.0.9",
     "jest": "^24.9.0",
     "jest-config": "^24.9.0",
     "rimraf": "^3.0.0",
-    "ts-jest": "^24.2.0",
+    "ts-jest": "^24.3.0",
     "tslint": "^5.20.1",
-    "typescript": "^3.7.3"
+    "typescript": "^3.7.4"
   },
   "dependencies": {}
 }
