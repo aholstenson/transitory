@@ -28,7 +28,6 @@ Using TypeScript:
 ```typescript
 import { newCache, BoundlessCache } from 'transitory';
 
-const cache: Cache<string, number> = newCache()
 const cache = newCache<string, number>()
   .maxSize(1000)
   .build();
