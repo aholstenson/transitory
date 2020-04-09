@@ -30,7 +30,7 @@
     "@types/node": "^13.1.6",
     "coveralls": "^3.0.9",
     "jest": "^24.9.0",
-    "jest-config": "^24.9.0",
+    "jest-config": "^25.3.0",
     "rimraf": "^3.0.0",
     "ts-jest": "^24.3.0",
     "tslint": "^5.20.1",
