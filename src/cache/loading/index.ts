@@ -40,8 +40,9 @@ export class DefaultLoadingCache<K extends KeyType, V> extends WrappedCache<K, V
 	}
 
 	public get(key: K, loader?: Loader<K, V>): Promise<V> {
-		if(this.has(key)) {
-			return Promise.resolve(this.getIfPresent(key) as V);
+		const valueIfAlreadyPresent = this.getIfPresent(key);
+		if (valueIfAlreadyPresent != null) {
+			return Promise.resolve(valueIfAlreadyPresent as V);
 		}
 
 		const data = this[DATA];

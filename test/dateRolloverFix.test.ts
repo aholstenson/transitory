@@ -16,7 +16,7 @@ describe('Cache testing', () => {
 
 	test('Cache timing out relead test', () => {
 		/*
-		 * A problem was discoverd in the Expiration cache where the code executed
+		 * A problem was discoverd in the Loading cache where the code executed
 		 * if(this.has(key)) {return Promise.resolve(this.getIfPresent(key) as V); }
 		 * Both the calls to has() and getIfPresent() read the Date.now() value to see
 		 * if the entry has expired. The problem occured when Date.now() returned the
