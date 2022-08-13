@@ -8,13 +8,13 @@ function safeishMultiply(a: number, b: number) {
 /**
  * Utility for calculating stable hashcodes for keys used in a cache.
  */
-export function hashcode(obj: string | number | boolean | null, seed=0) {
+export function hashcode(obj: string | number | boolean | null, seed = 0) {
 	switch(typeof obj) {
 		case 'string':
 		{
 			let hash = seed;
 			const n = obj.length & ~0x3;
-			for(let i=0; i<n; i+=4) {
+			for(let i = 0; i < n; i += 4) {
 				let k1 = ((obj.charCodeAt(i) & 0xffff)) |
 					((obj.charCodeAt(i + 1) & 0xffff) << 8) |
 					((obj.charCodeAt(i + 2) & 0xffff) << 16) |
@@ -26,7 +26,7 @@ export function hashcode(obj: string | number | boolean | null, seed=0) {
 
 				hash ^= k1;
 				hash = (hash << 13) | (hash >>> 19);
-				hash = hash * 5 + 0xe6546b64;
+				hash = (hash * 5) + 0xe6546b64;
 			}
 
 			{
@@ -34,8 +34,10 @@ export function hashcode(obj: string | number | boolean | null, seed=0) {
 				switch(obj.length & 3) {
 					case 3:
 						k1 ^= (obj.charCodeAt(n + 2) & 0xffff) << 16;
+					// eslint-disable-next-line no-fallthrough
 					case 2:
 						k1 ^= (obj.charCodeAt(n + 1) & 0xffff) << 8;
+					// eslint-disable-next-line no-fallthrough
 					case 1:
 						k1 ^= (obj.charCodeAt(n) & 0xffff);
 
@@ -66,7 +68,7 @@ export function hashcode(obj: string | number | boolean | null, seed=0) {
 			hash = safeishMultiply(hash, C2);
 
 			hash = (hash << 13) | (hash >>> 19);
-			hash = hash * 5 + 0xe6546b64;
+			hash = (hash * 5) + 0xe6546b64;
 
 			hash ^= hash >>> 16;
 			hash = safeishMultiply(hash, 0x85ebca6b);

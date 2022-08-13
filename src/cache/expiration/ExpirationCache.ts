@@ -1,19 +1,18 @@
-import { KeyType } from '../KeyType';
 
-import { Cache } from '../Cache';
-import { CommonCacheOptions } from '../CommonCacheOptions';
-import { CacheSPI } from '../CacheSPI';
 import { AbstractCache } from '../AbstractCache';
-
+import { Cache } from '../Cache';
+import { CacheSPI } from '../CacheSPI';
+import { CommonCacheOptions } from '../CommonCacheOptions';
+import { KeyType } from '../KeyType';
 import { Metrics } from '../metrics/Metrics';
-import { Expirable } from './Expirable';
 import { RemovalListener } from '../RemovalListener';
 import { RemovalReason } from '../RemovalReason';
-
-import { TimerWheel, TimerNode } from './TimerWheel';
-import { MaxAgeDecider } from './MaxAgeDecider';
-
 import { PARENT, ON_REMOVE, TRIGGER_REMOVE, ON_MAINTENANCE, MAINTENANCE } from '../symbols';
+
+import { Expirable } from './Expirable';
+import { MaxAgeDecider } from './MaxAgeDecider';
+import { TimerWheel, TimerNode } from './TimerWheel';
+
 
 const DATA = Symbol('expirationData');
 
@@ -48,7 +47,7 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 	public [ON_REMOVE]?: RemovalListener<K, V>;
 	public [ON_MAINTENANCE]?: () => void;
 
-	constructor(options: ExpirationCacheOptions<K, V>) {
+	public constructor(options: ExpirationCacheOptions<K, V>) {
 		super();
 
 		this[PARENT] = options.parent;
@@ -68,27 +67,24 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 
 		// Custom onRemove handler for the parent cache
 		this[PARENT][ON_REMOVE] = (key: K, node: Expirable<V>, reason: RemovalReason) => {
-			if(node.isExpired()) {
-				reason = RemovalReason.EXPIRED;
-			}
-
+			const actualReason = node.isExpired() ? RemovalReason.EXPIRED : reason;
 			this[DATA].timerWheel.deschedule(node as TimerNode<K, V>);
-			this[TRIGGER_REMOVE](key, node.value as V, reason);
+			this[TRIGGER_REMOVE](key, node.value as V, actualReason);
 		};
 
 		// Custom maintenance behaviour to advance the wheel
 		this[PARENT][ON_MAINTENANCE] = this[MAINTENANCE].bind(this);
 	}
 
-	get maxSize(): number {
+	public get maxSize(): number {
 		return this[PARENT].maxSize;
 	}
 
-	get size(): number {
+	public get size(): number {
 		return this[PARENT].size;
 	}
 
-	get weightedSize(): number {
+	public get weightedSize(): number {
 		return this[PARENT].weightedSize;
 	}
 
@@ -158,7 +154,7 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 	}
 
 	public clear(): void {
-		return this[PARENT].clear();
+		this[PARENT].clear();
 	}
 
 	public keys(): K[] {
@@ -166,10 +162,10 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 	}
 
 	public cleanUp(): void {
-		return this[PARENT].cleanUp();
+		this[PARENT].cleanUp();
 	}
 
-	get metrics(): Metrics {
+	public get metrics(): Metrics {
 		return this[PARENT].metrics;
 	}
 

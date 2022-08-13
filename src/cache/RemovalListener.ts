@@ -1,5 +1,4 @@
 import { KeyType } from './KeyType';
-
 import { RemovalReason } from './RemovalReason';
 
 /**

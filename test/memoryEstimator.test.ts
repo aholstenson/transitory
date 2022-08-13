@@ -1,6 +1,6 @@
 
-import { memoryEstimator } from '../src/utils/memoryEstimator';
 import { CacheNode } from '../src/cache/CacheNode';
+import { memoryEstimator } from '../src/utils/memoryEstimator';
 
 describe('memoryEstimator', function() {
 	it('string', function() {
@@ -16,14 +16,14 @@ describe('memoryEstimator', function() {
 	});
 
 	it('object', function() {
-		expect(memoryEstimator({ 'kaka': 2 })).toEqual(28);
+		expect(memoryEstimator({ kaka: 2 })).toEqual(28);
 	});
 
 	it('array', function() {
 		expect(memoryEstimator([ 2, 'kaka' ])).toEqual(24);
 	});
 
-	it('CacheNode', function () {
-		expect(memoryEstimator(new CacheNode('key', { 'kaka': 2 }))).toEqual(50);
+	it('CacheNode', function() {
+		expect(memoryEstimator(new CacheNode('key', { kaka: 2 }))).toEqual(50);
 	});
 });

@@ -1,5 +1,6 @@
 import { CacheNode } from '../CacheNode';
 import { KeyType } from '../KeyType';
+
 import { Expirable } from './Expirable';
 
 function toPowerOfN(n: number) {
@@ -9,7 +10,7 @@ function toPowerOfN(n: number) {
 const LAYERS = [ 64, 64, 32, 4, 1 ];
 const SPANS = [	toPowerOfN(1000), toPowerOfN(60000), toPowerOfN(3600000), toPowerOfN(86400000), LAYERS[3] * toPowerOfN(86400000), LAYERS[3] * toPowerOfN(86400000) ];
 
-const SHIFTS = SPANS.slice(0, SPANS.length-1).map(span => 1 + Math.floor(Math.log(span - 1) * Math.LOG2E));
+const SHIFTS = SPANS.slice(0, SPANS.length - 1).map(span => 1 + Math.floor(Math.log(span - 1) * Math.LOG2E));
 
 export type EvictionListener<K extends KeyType> = (keys: K[]) => void;
 
@@ -32,13 +33,13 @@ export class TimerWheel<K extends KeyType, V> {
 	private base: number;
 	private layers: TimerNode<K, V>[][];
 
-	constructor(evict: EvictionListener<K>) {
+	public constructor(evict: EvictionListener<K>) {
 		this.evict = evict;
 
 		this.base = Date.now();
 		this.layers = LAYERS.map(b => {
 			const result = new Array(b);
-			for(let i=0; i<b; i++) {
+			for(let i = 0; i < b; i++) {
 				result[i] = new TimerNode(this, null, null);
 			}
 			return result;
@@ -47,7 +48,7 @@ export class TimerWheel<K extends KeyType, V> {
 		this.time = 0;
 	}
 
-	get localTime() {
+	public get localTime() {
 		return Date.now() - this.base;
 	}
 
@@ -56,7 +57,7 @@ export class TimerWheel<K extends KeyType, V> {
 		if(d <= 0) return null;
 
 		const layers = this.layers;
-		for(let i=0, n=layers.length-1; i<n; i++) {
+		for(let i = 0, n = layers.length - 1; i < n; i++) {
 			if(d >= SPANS[i + 1]) continue;
 
 			const ticks = node.time >>> SHIFTS[i];
@@ -80,7 +81,7 @@ export class TimerWheel<K extends KeyType, V> {
 		 * Go through all of the layers on the wheel, evict things and move
 		 * other stuff around.
 		 */
-		for(let i=0, n=SHIFTS.length; i<n; i++) {
+		for(let i = 0, n = SHIFTS.length; i < n; i++) {
 			const previousTicks = previous >>> SHIFTS[i];
 			const timeTicks = time >>> SHIFTS[i];
 
@@ -101,7 +102,7 @@ export class TimerWheel<K extends KeyType, V> {
 			}
 
 			// Go through all of the buckets and move stuff around
-			for(let j=start; j<=end; j++) {
+			for(let j = start; j <= end; j++) {
 				const head = wheel[j & (wheel.length - 1)];
 
 				let node = head.next;
@@ -172,7 +173,7 @@ export class TimerNode<K extends KeyType, V> extends CacheNode<K, V> implements 
 	private wheel: TimerWheel<K, V>;
 	public time: number;
 
-	constructor(wheel: TimerWheel<K, V>, key: K | null, value: V | null) {
+	public constructor(wheel: TimerWheel<K, V>, key: K | null, value: V | null) {
 		super(key, value);
 
 		this.time = Number.MAX_SAFE_INTEGER;

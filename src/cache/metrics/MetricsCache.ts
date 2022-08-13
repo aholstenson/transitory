@@ -1,10 +1,10 @@
-import { KeyType } from '../KeyType';
-
 import { Cache } from '../Cache';
+import { CommonCacheOptions } from '../CommonCacheOptions';
+import { KeyType } from '../KeyType';
 import { WrappedCache } from '../WrappedCache';
 
 import { Metrics } from './Metrics';
-import { CommonCacheOptions } from '../CommonCacheOptions';
+
 
 const METRICS = Symbol('metrics');
 
@@ -22,7 +22,7 @@ export interface MetricsCacheOptions<K extends KeyType, V> extends CommonCacheOp
 export class MetricsCache<K extends KeyType, V> extends WrappedCache<K, V> {
 	private [METRICS]: Metrics;
 
-	constructor(options: MetricsCacheOptions<K, V>) {
+	public constructor(options: MetricsCacheOptions<K, V>) {
 		super(options.parent, options.removalListener || null);
 
 		this[METRICS] = {
@@ -38,7 +38,7 @@ export class MetricsCache<K extends KeyType, V> extends WrappedCache<K, V> {
 		};
 	}
 
-	get metrics(): Metrics {
+	public get metrics(): Metrics {
 		return this[METRICS];
 	}
 
@@ -49,7 +49,6 @@ export class MetricsCache<K extends KeyType, V> extends WrappedCache<K, V> {
 			this[METRICS].misses++;
 		} else {
 			this[METRICS].hits++;
-
 		}
 		return result;
 	}

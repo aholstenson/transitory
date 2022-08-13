@@ -1,6 +1,10 @@
 
 import { CountMinSketch } from '../src/cache/bounded/CountMinSketch';
 
+/**
+ *
+ * @param key
+ */
 function hash(key: number | string) {
 	return CountMinSketch.hash(key);
 }
@@ -24,9 +28,9 @@ describe('CountMinSketch', function() {
 			const max = 200;
 			const sketch = CountMinSketch.uint8(max, 4, false);
 			const data = new Map();
-			for(let i=0; i<updates; i++) {
+			for(let i = 0; i < updates; i++) {
 				const key = Math.floor(Math.random() * max);
-				let c = data.get(key) || 0;
+				const c = data.get(key) || 0;
 				data.set(key, c + 1);
 				sketch.update(hash(key));
 			}
@@ -45,10 +49,10 @@ describe('CountMinSketch', function() {
 	describe('Generic', function() {
 		it('Decay after N updates', function() {
 			const sketch = CountMinSketch.uint8(5, 4);
-			const n = 5*10;// same as sketch.resetAfter
+			const n = 5 * 10;// same as sketch.resetAfter
 
 			// Perform up to n-1 updates
-			for(let i=0; i<n-1; i++) {
+			for(let i = 0; i < n - 1; i++) {
 				sketch.update(hash(i % 10));
 			}
 

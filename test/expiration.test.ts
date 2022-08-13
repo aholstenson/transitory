@@ -1,11 +1,15 @@
 import { BoundlessCache } from '../src/cache/boundless';
-import { ExpirationCache } from '../src/cache/expiration';
+import { ExpirationCache, Expirable } from '../src/cache/expiration';
 import { KeyType } from '../src/cache/KeyType';
-import { Expirable } from '../src/cache/expiration';
-import { RemovalHelper } from './removal-helper';
 import { RemovalListener } from '../src/cache/RemovalListener';
 import { RemovalReason } from '../src/cache/RemovalReason';
 
+import { RemovalHelper } from './removal-helper';
+
+/**
+ *
+ * @param listener
+ */
 function newCache<K extends KeyType, V>(listener?: RemovalListener<K, V>) {
 	return new ExpirationCache({
 		parent: new BoundlessCache<K, Expirable<V>>({}),
@@ -15,6 +19,10 @@ function newCache<K extends KeyType, V>(listener?: RemovalListener<K, V>) {
 	});
 }
 
+/**
+ *
+ * @param listener
+ */
 function newReadCache<K extends KeyType, V>(listener?: RemovalListener<K, V>) {
 	return new ExpirationCache({
 		parent: new BoundlessCache<K, Expirable<V>>({}),
@@ -113,7 +121,7 @@ describe('ExpirationCache', function() {
 			cache.getIfPresent('key');
 
 			setTimeout(() => {
-				expect(cache.getIfPresent('key')).toBeNull()
+				expect(cache.getIfPresent('key')).toBeNull();
 				cb();
 			}, 15);
 		});
@@ -130,7 +138,7 @@ describe('ExpirationCache', function() {
 
 			expect(removal.didRemove).toEqual(true);
 			expect(removal.removedKey).toEqual('key');
-			expect(removal.removedValue).toEqual('value')
+			expect(removal.removedValue).toEqual('value');
 			expect(removal.removalReason).toEqual(RemovalReason.EXPLICIT);
 		});
 
@@ -144,7 +152,7 @@ describe('ExpirationCache', function() {
 			cache.set('one', 4321);
 			expect(removal.didRemove).toEqual(true);
 			expect(removal.removedKey).toEqual('one');
-			expect(removal.removedValue).toEqual(1234)
+			expect(removal.removedValue).toEqual(1234);
 			expect(removal.removalReason).toEqual(RemovalReason.REPLACED);
 		});
 
@@ -159,7 +167,7 @@ describe('ExpirationCache', function() {
 				cache.set('one', 4321);
 				expect(removal.didRemove).toEqual(true);
 				expect(removal.removedKey).toEqual('one');
-				expect(removal.removedValue).toEqual(1234)
+				expect(removal.removedValue).toEqual(1234);
 				expect(removal.removalReason).toEqual(RemovalReason.EXPIRED);
 				cb();
 			}, 200);

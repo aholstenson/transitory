@@ -1,12 +1,15 @@
 
 import { BoundlessCache } from '../src/cache/boundless';
-import { DefaultLoadingCache } from '../src/cache/loading';
 import { KeyType } from '../src/cache/KeyType';
-import { Loader } from '../src/cache/loading';
-
-import { RemovalHelper } from './removal-helper';
+import { DefaultLoadingCache, Loader } from '../src/cache/loading';
 import { RemovalReason } from '../src/cache/RemovalReason';
 
+import { RemovalHelper } from './removal-helper';
+
+/**
+ *
+ * @param loader
+ */
 function newCache<K extends KeyType, V>(loader?: Loader<K, V>) {
 	return new DefaultLoadingCache({
 		loader: loader,
@@ -37,8 +40,10 @@ describe('LoadingCache', function() {
 		expect(cache.getIfPresent('key')).toEqual(null);
 
 		try {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			cache.get('key');
 			fail();
+		// eslint-disable-next-line no-empty
 		} catch(ex) {
 		}
 	});
@@ -61,7 +66,7 @@ describe('LoadingCache', function() {
 	it('Loads non-existent via local loader', function() {
 		const cache = newCache<number, number>();
 
-		return cache.get(100, key => key*2)
+		return cache.get(100, key => key * 2)
 			.then((v: number) => expect(v).toEqual(200));
 	});
 
@@ -73,11 +78,13 @@ describe('LoadingCache', function() {
 	});
 
 	it('Non-existent failure via global loader with Promise', function() {
-		const cache = newCache<number, string>(key => error());
+		const cache = newCache<number, string>(() => error());
 
 		return cache.get(100)
-			.then(() => { throw Error('This should have failed') })
-			.catch(err => null);
+			.then(() => {
+				throw Error('This should have failed');
+			})
+			.catch(() => null);
 	});
 
 	describe('Removal listeners', function() {
@@ -131,12 +138,19 @@ describe('LoadingCache', function() {
 	});
 });
 
+/**
+ *
+ * @param v
+ */
 function value(v: number): Promise<number> {
 	return new Promise(resolve => {
 		setTimeout(() => resolve(v), 0);
 	});
 }
 
+/**
+ *
+ */
 function error(): Promise<string> {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => reject(), 0);

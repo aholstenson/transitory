@@ -1,17 +1,16 @@
+import { AbstractCache } from '../AbstractCache';
 import { Cache } from '../Cache';
+import { CacheNode } from '../CacheNode';
 import { CacheSPI } from '../CacheSPI';
-
+import { KeyType } from '../KeyType';
 import { Metrics } from '../metrics/Metrics';
+import { RemovalListener } from '../RemovalListener';
+import { RemovalReason } from '../RemovalReason';
+import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE, MAINTENANCE } from '../symbols';
+import { Weigher } from '../Weigher';
+
 import { CountMinSketch } from './CountMinSketch';
 
-import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE, MAINTENANCE } from '../symbols';
-
-import { RemovalReason } from '../RemovalReason';
-import { CacheNode } from '../CacheNode';
-import { Weigher } from '../Weigher';
-import { KeyType } from '../KeyType';
-import { AbstractCache } from '../AbstractCache';
-import { RemovalListener } from '../RemovalListener';
 
 const percentInMain = 0.99;
 const percentProtected = 0.8;
@@ -133,10 +132,10 @@ class BoundedNode<K extends KeyType, V> extends CacheNode<K, V> {
 	public weight: number;
 	public location: Location;
 
-	constructor(key: K | null, value: V | null) {
+	public constructor(key: K | null, value: V | null) {
 		super(key, value);
 
-		this.hashCode = key == null ? 0 : CountMinSketch.hash(key);
+		this.hashCode = key === null ? 0 : CountMinSketch.hash(key);
 		this.weight = 1;
 		this.location = Location.WINDOW;
 	}
@@ -227,7 +226,7 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 	public [ON_REMOVE]?: RemovalListener<K, V>;
 	public [ON_MAINTENANCE]?: () => void;
 
-	constructor(options: BoundedCacheOptions<K, V>) {
+	public constructor(options: BoundedCacheOptions<K, V>) {
 		super();
 
 		const maxMain = Math.floor(percentInMain * options.maxSize);
@@ -263,7 +262,7 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 				adjustment: 0,
 
 				previousHitRate: 0,
-				stepSize: - adaptiveStepPercent * options.maxSize
+				stepSize: -adaptiveStepPercent * options.maxSize
 			},
 
 			window: {
@@ -291,21 +290,21 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 	/**
 	 * Get the maximum size this cache can be.
 	 */
-	get maxSize() {
+	public get maxSize() {
 		return this[DATA].maxSize;
 	}
 
 	/**
 	 * Get the current size of the cache.
 	 */
-	get size() {
+	public get size() {
 		return this[DATA].values.size;
 	}
 
 	/**
 	 * Get the weighted size of all items in the cache.
 	 */
-	get weightedSize() {
+	public get weightedSize() {
 		return this[DATA].weightedSize;
 	}
 
@@ -517,7 +516,7 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		this[MAINTENANCE]();
 	}
 
-	get metrics(): Metrics {
+	public get metrics(): Metrics {
 		throw new Error('Metrics are not supported by this cache');
 	}
 
@@ -728,11 +727,11 @@ function calculateAdaptiveAdjustment<K extends KeyType, V>(data: BoundedCacheDat
 
 	const hitRate = adaptiveData.hits / requestCount;
 	const hitRateDiff = hitRate - adaptiveData.previousHitRate;
-	const amount = hitRateDiff >= 0 ? adaptiveData.stepSize : - adaptiveData.stepSize;
+	const amount = hitRateDiff >= 0 ? adaptiveData.stepSize : -adaptiveData.stepSize;
 
 	let nextStep;
 	if(Math.abs(hitRateDiff) >= adaptiveRestartThreshold) {
-		nextStep = adaptiveStepPercent * data.weightedMaxSize * (amount >= 0 ? 1 : - 1);
+		nextStep = adaptiveStepPercent * data.weightedMaxSize * (amount >= 0 ? 1 : -1);
 	} else {
 		nextStep = adaptiveStepDecayRate * amount;
 	}
@@ -776,7 +775,7 @@ function increaseWindowSegmentSize<K extends KeyType, V>(data: BoundedCacheData<
 	/*
 	 * Transfer up to 1000 node into the window segment.
 	 */
-	for(let i=0; i<1000; i++) {
+	for(let i = 0; i < 1000; i++) {
 		let lru = data.probation.head.next;
 		if(lru === data.probation.head || lru.weight > amountLeftToAdjust) {
 			/*
@@ -842,7 +841,7 @@ function decreaseWindowSegmentSize<K extends KeyType, V>(data: BoundedCacheData<
 	 * Transfer upp to 1000 nodes from the window segment into the probation
 	 * segment.
 	 */
-	for(let i=0; i<1000; i++) {
+	for(let i = 0; i < 1000; i++) {
 		const lru = data.window.head.next;
 		if(lru === data.window.head) {
 			// No more nodes in the window segment, can't adjust anymore

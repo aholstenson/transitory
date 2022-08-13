@@ -1,14 +1,10 @@
-import { KeyType } from '../KeyType';
-
+import { AbstractCache } from '../AbstractCache';
 import { Cache } from '../Cache';
 import { CacheSPI } from '../CacheSPI';
-import { AbstractCache } from '../AbstractCache';
-
+import { KeyType } from '../KeyType';
+import { Metrics } from '../metrics/Metrics';
 import { RemovalListener } from '../RemovalListener';
 import { RemovalReason } from '../RemovalReason';
-
-import { Metrics } from '../metrics/Metrics';
-
 import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE, MAINTENANCE } from '../symbols';
 
 const DATA = Symbol('boundlessData');
@@ -45,7 +41,7 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 	public [ON_REMOVE]?: RemovalListener<K, V>;
 	public [ON_MAINTENANCE]?: () => void;
 
-	constructor(options: BoundlessCacheOptions<K, V>) {
+	public constructor(options: BoundlessCacheOptions<K, V>) {
 		super();
 
 		this[DATA] = {
@@ -60,18 +56,18 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 	/**
 	 * Get the maximum size this cache can be.
 	 */
-	get maxSize() {
+	public get maxSize() {
 		return -1;
 	}
 
 	/**
 	 * Get the current size of the cache.
 	 */
-	get size() {
+	public get size() {
 		return this[DATA].values.size;
 	}
 
-	get weightedSize() {
+	public get weightedSize() {
 		return this.size;
 	}
 
@@ -179,7 +175,7 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 		this[MAINTENANCE]();
 	}
 
-	get metrics(): Metrics {
+	public get metrics(): Metrics {
 		throw new Error('Metrics are not supported by this cache');
 	}
 

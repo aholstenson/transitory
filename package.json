@@ -8,7 +8,7 @@
     "test": "jest",
     "ci": "npm run coverage && npm run lint",
     "coverage": "jest --coverage",
-    "lint": "tslint  --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
+    "lint": "eslint --ext .ts,.tsx .",
     "build": "tsc --module commonjs --target es5 --outDir dist/cjs && tsc --module es6 --target es6 --outDir dist/esm",
     "prebuild": "rimraf dist",
     "prepublishOnly": "npm run build"
@@ -28,12 +28,17 @@
   "devDependencies": {
     "@types/jest": "^24.0.25",
     "@types/node": "^13.1.6",
+    "@typescript-eslint/eslint-plugin": "^5.33.0",
+    "@typescript-eslint/parser": "^5.33.0",
     "coveralls": "^3.0.9",
+    "eslint": "^8.21.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsdoc": "^39.3.6",
+    "eslint-plugin-tsdoc": "^0.2.16",
     "jest": "^24.9.0",
     "jest-config": "^24.9.0",
     "rimraf": "^3.0.0",
     "ts-jest": "^24.3.0",
-    "tslint": "^5.20.1",
     "typescript": "^3.7.4"
   },
   "dependencies": {}

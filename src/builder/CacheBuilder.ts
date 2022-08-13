@@ -1,16 +1,16 @@
-import { Cache } from '../cache/Cache';
 import { BoundedCache } from '../cache/bounded/BoundedCache';
-import { KeyType } from '../cache/KeyType';
 import { BoundlessCache } from '../cache/boundless/BoundlessCache';
-import { Weigher } from '../cache/Weigher';
-import { DefaultLoadingCache } from '../cache/loading/DefaultLoadingCache';
+import { Cache } from '../cache/Cache';
+import { Expirable } from '../cache/expiration/Expirable';
 import { ExpirationCache } from '../cache/expiration/ExpirationCache';
+import { MaxAgeDecider } from '../cache/expiration/MaxAgeDecider';
+import { KeyType } from '../cache/KeyType';
+import { DefaultLoadingCache } from '../cache/loading/DefaultLoadingCache';
+import { Loader } from '../cache/loading/Loader';
+import { LoadingCache } from '../cache/loading/LoadingCache';
 import { MetricsCache } from '../cache/metrics/MetricsCache';
 import { RemovalListener } from '../cache/RemovalListener';
-import { Loader } from '../cache/loading/Loader';
-import { MaxAgeDecider } from '../cache/expiration/MaxAgeDecider';
-import { LoadingCache } from '../cache/loading/LoadingCache';
-import { Expirable } from '../cache/expiration/Expirable';
+import { Weigher } from '../cache/Weigher';
 
 export interface CacheBuilder<K extends KeyType, V> {
 	/**
@@ -229,7 +229,7 @@ class LoadingCacheBuilderImpl<K extends KeyType, V> implements LoadingCacheBuild
 	private parent: CacheBuilder<K, V>;
 	private loader: Loader<K, V> | null;
 
-	constructor(parent: CacheBuilder<K, V>, loader: Loader<K, V> | null) {
+	public constructor(parent: CacheBuilder<K, V>, loader: Loader<K, V> | null) {
 		this.parent = parent;
 		this.loader = loader;
 	}
@@ -253,6 +253,7 @@ class LoadingCacheBuilderImpl<K extends KeyType, V> implements LoadingCacheBuild
 		throw new Error('Already building a loading cache');
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	public withLoader(loader: Loader<K, V>): LoadingCacheBuilder<K, V> {
 		throw new Error('Already building a loading cache');
 	}

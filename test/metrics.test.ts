@@ -1,11 +1,13 @@
-import { KeyType } from '../src/cache/KeyType';
-
 import { BoundlessCache } from '../src/cache/boundless';
+import { KeyType } from '../src/cache/KeyType';
 import { MetricsCache } from '../src/cache/metrics/index';
-
-import { RemovalHelper } from './removal-helper';
 import { RemovalReason } from '../src/cache/RemovalReason';
 
+import { RemovalHelper } from './removal-helper';
+
+/**
+ *
+ */
 function newCache<K extends KeyType, V>() {
 	return new MetricsCache({
 		parent: new BoundlessCache<K, V>({})

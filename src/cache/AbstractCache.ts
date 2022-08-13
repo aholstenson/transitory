@@ -1,7 +1,5 @@
-import { KeyType } from './KeyType';
-
 import { Cache } from './Cache';
-
+import { KeyType } from './KeyType';
 import { Metrics } from './metrics/Metrics';
 
 /**

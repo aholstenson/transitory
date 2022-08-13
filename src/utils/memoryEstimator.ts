@@ -5,7 +5,7 @@ const OBJ_OVERHEAD = 4;
 export function memoryEstimator(value: any): number {
 	switch(typeof value) {
 		case 'string':
-			return OBJ_OVERHEAD + value.length * 2;
+			return OBJ_OVERHEAD + (value.length * 2);
 		case 'boolean':
 			return 4;
 		case 'number':

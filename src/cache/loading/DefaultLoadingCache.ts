@@ -1,11 +1,11 @@
-import { KeyType } from '../KeyType';
 
 import { Cache } from '../Cache';
 import { CommonCacheOptions } from '../CommonCacheOptions';
+import { KeyType } from '../KeyType';
 import { WrappedCache } from '../WrappedCache';
 
-import { LoadingCache } from './LoadingCache';
 import { Loader } from './Loader';
+import { LoadingCache } from './LoadingCache';
 
 const DATA = Symbol('loadingData');
 
@@ -30,7 +30,7 @@ interface LoadingCacheData<K extends KeyType, V> {
 export class DefaultLoadingCache<K extends KeyType, V> extends WrappedCache<K, V> implements LoadingCache<K, V> {
 	private [DATA]: LoadingCacheData<K, V>;
 
-	constructor(options: LoadingCacheOptions<K, V>) {
+	public constructor(options: LoadingCacheOptions<K, V>) {
 		super(options.parent, options.removalListener || null);
 
 		this[DATA] = {
@@ -41,8 +41,8 @@ export class DefaultLoadingCache<K extends KeyType, V> extends WrappedCache<K, V
 
 	public get(key: K, loader?: Loader<K, V>): Promise<V> {
 		const currentValue = this.getIfPresent(key);
-		if(currentValue != null) {
-			return Promise.resolve(currentValue as V);
+		if(currentValue !== null) {
+			return Promise.resolve(currentValue);
 		}
 
 		const data = this[DATA];

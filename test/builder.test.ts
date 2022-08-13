@@ -6,7 +6,7 @@ describe('Builder', function() {
 		const cache = new CacheBuilderImpl<string, string>()
 			.build();
 
-		expect(cache).toBeTruthy()
+		expect(cache).toBeTruthy();
 		expect(cache.maxSize).toEqual(-1);
 	});
 

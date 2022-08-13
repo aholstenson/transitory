@@ -8,7 +8,7 @@ export class CacheNode<K, V> {
 	public next: this;
 	public previous: this;
 
-	constructor(key: K | null, value: V | null) {
+	public constructor(key: K | null, value: V | null) {
 		this.key = key;
 		this.value = value;
 
@@ -19,7 +19,8 @@ export class CacheNode<K, V> {
 	public remove() {
 		this.previous.next = this.next;
 		this.next.previous = this.previous;
-		this.next = this.previous = this;
+		this.next = this;
+		this.previous = this;
 	}
 
 	public appendToTail(head: this) {

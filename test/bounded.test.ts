@@ -1,13 +1,14 @@
-import { RemovalHelper } from './removal-helper';
 
 import { BoundedCache } from '../src/cache/bounded';
 import { RemovalReason } from '../src/cache/RemovalReason';
+
+import { RemovalHelper } from './removal-helper';
 
 describe('BoundedCache', function() {
 	it('Can create', function() {
 		new BoundedCache({
 			maxSize: 50
-		})
+		});
 	});
 
 	it('Set value in cache', function() {
@@ -85,7 +86,7 @@ describe('BoundedCache', function() {
 			const maxSize = 10;
 			const cache = new BoundedCache({ maxSize });
 
-			for(let i=0; i<maxSize*2; i++) {
+			for(let i = 0; i < maxSize * 2; i++) {
 				cache.set(i, i);
 				cache.cleanUp();
 			}
@@ -97,7 +98,7 @@ describe('BoundedCache', function() {
 			const maxSize = 3;
 			const cache = new BoundedCache({ maxSize });
 
-			for(let i=0; i<maxSize; i++) {
+			for(let i = 0; i < maxSize; i++) {
 				cache.set(i, i);
 			}
 
@@ -116,7 +117,7 @@ describe('BoundedCache', function() {
 			const maxSize = 10;
 			const cache = new BoundedCache({ maxSize });
 
-			for(let i=0; i<maxSize*2; i++) {
+			for(let i = 0; i < maxSize * 2; i++) {
 				cache.set(i, i);
 			}
 
@@ -171,7 +172,7 @@ describe('BoundedCache', function() {
 				removalListener: removal.listener
 			});
 
-			for(let i=0; i<5; i++) {
+			for(let i = 0; i < 5; i++) {
 				cache.set(i, 1234);
 			}
 			cache.cleanUp();
@@ -229,7 +230,7 @@ describe('BoundedCache', function() {
 				weigher: (key, value) => 10
 			});
 
-			for(let i=0; i<6; i++) {
+			for(let i = 0; i < 6; i++) {
 				cache.set(i, i);
 			}
 
@@ -244,7 +245,7 @@ describe('BoundedCache', function() {
 				weigher: (key, value) => value
 			});
 
-			for(let i=0; i<500; i++) {
+			for(let i = 0; i < 500; i++) {
 				cache.set(i, i);
 			}
 
@@ -269,10 +270,10 @@ describe('BoundedCache', function() {
 });
 
 function randomTrace(cache: BoundedCache<number, number>, max: number, n: number) {
-	for(let i=0; i<n; i++) {
+	for(let i = 0; i < n; i++) {
 		const id = Math.floor(Math.random() * max);
-		let c = cache.getIfPresent(id);
-		if(c == null) {
+		const c = cache.getIfPresent(id);
+		if(c === null) {
 			cache.set(id, id);
 		}
 	}

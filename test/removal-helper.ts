@@ -1,6 +1,6 @@
 import { KeyType } from '../src/cache/KeyType';
-import { RemovalReason } from '../src/cache/RemovalReason';
 import { RemovalListener } from '../src/cache/RemovalListener';
+import { RemovalReason } from '../src/cache/RemovalReason';
 
 export class RemovalHelper<K extends KeyType, V> {
 	public listener: RemovalListener<K, V>;
@@ -11,7 +11,7 @@ export class RemovalHelper<K extends KeyType, V> {
 	public removedValue: V | null;
 	public removalReason: RemovalReason | null;
 
-	constructor() {
+	public constructor() {
 		this.listener = (key, value, reason) => {
 			this.didRemove = true;
 

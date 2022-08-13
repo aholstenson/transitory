@@ -1,6 +1,5 @@
-import { KeyType } from '../KeyType';
-
 import { Cache } from '../Cache';
+import { KeyType } from '../KeyType';
 
 import { Loader } from './Loader';
 

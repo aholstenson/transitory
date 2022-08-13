@@ -1,14 +1,11 @@
-import { KeyType } from './KeyType';
-
+import { AbstractCache } from './AbstractCache';
 import { Cache } from './Cache';
 import { CacheSPI } from './CacheSPI';
-import { AbstractCache } from './AbstractCache';
-
+import { KeyType } from './KeyType';
 import { Metrics } from './metrics/Metrics';
 import { RemovalListener } from './RemovalListener';
-
-import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE } from './symbols';
 import { RemovalReason } from './RemovalReason';
+import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE } from './symbols';
 
 const PARENT = Symbol('parent');
 const REMOVAL_LISTENER = Symbol('removalListener');
@@ -23,7 +20,7 @@ export abstract class WrappedCache<K extends KeyType, V> extends AbstractCache<K
 	public [ON_REMOVE]?: RemovalListener<K, V>;
 	private [REMOVAL_LISTENER]: RemovalListener<K, V> | null;
 
-	constructor(parent: Cache<K, V> & CacheSPI<K, V>, removalListener: RemovalListener<K, V> | null) {
+	public constructor(parent: Cache<K, V> & CacheSPI<K, V>, removalListener: RemovalListener<K, V> | null) {
 		super();
 
 		this[PARENT] = parent;
@@ -33,15 +30,15 @@ export abstract class WrappedCache<K extends KeyType, V> extends AbstractCache<K
 		this[PARENT][ON_REMOVE] = this[TRIGGER_REMOVE].bind(this);
 	}
 
-	get maxSize(): number {
+	public get maxSize(): number {
 		return this[PARENT].maxSize;
 	}
 
-	get size(): number {
+	public get size(): number {
 		return this[PARENT].size;
 	}
 
-	get weightedSize(): number {
+	public get weightedSize(): number {
 		return this[PARENT].weightedSize;
 	}
 
@@ -66,7 +63,7 @@ export abstract class WrappedCache<K extends KeyType, V> extends AbstractCache<K
 	}
 
 	public clear(): void {
-		return this[PARENT].clear();
+		this[PARENT].clear();
 	}
 
 	public keys(): K[] {
@@ -74,7 +71,7 @@ export abstract class WrappedCache<K extends KeyType, V> extends AbstractCache<K
 	}
 
 	public cleanUp(): void {
-		return this[PARENT].cleanUp();
+		this[PARENT].cleanUp();
 	}
 
 	public get metrics(): Metrics {

@@ -1,10 +1,11 @@
 import { BoundlessCache } from '../src/cache/boundless';
-import { RemovalHelper } from './removal-helper';
 import { RemovalReason } from '../src/cache/RemovalReason';
+
+import { RemovalHelper } from './removal-helper';
 
 describe('BoundlessCache', function() {
 	it('Can create', function() {
-		new BoundlessCache<string, number>({})
+		new BoundlessCache<string, number>({});
 	});
 
 	it('Set value in cache', function() {
@@ -98,5 +99,5 @@ describe('BoundlessCache', function() {
 			expect(removal.removedValue).toEqual(1234);
 			expect(removal.removalReason).toEqual(RemovalReason.EXPLICIT);
 		});
-	})
+	});
 });

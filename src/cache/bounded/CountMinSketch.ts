@@ -1,12 +1,13 @@
-import { hashcode } from './hashcode';
 import { KeyType } from '../KeyType';
+
+import { hashcode } from './hashcode';
 
 function toPowerOfN(n: number) {
 	return Math.pow(2, Math.ceil(Math.log(n) / Math.LN2));
 }
 
-function hash2(a: number) {
-	a = (a ^ 61) ^ (a >>> 16);
+function hash2(a0: number) {
+	let a = (a0 ^ 61) ^ (a0 >>> 16);
 	a = a + (a << 3);
 	a = a ^ (a >>> 4);
 	a = safeishMultiply(a, 0x27d4eb2d);
@@ -40,7 +41,7 @@ export class CountMinSketch {
 
 	private table: Uint8Array;
 
-	constructor(width: number, depth: number, decay: boolean) {
+	public constructor(width: number, depth: number, decay: boolean) {
 		this.width = toPowerOfN(width);
 		this.depth = depth;
 
@@ -59,7 +60,7 @@ export class CountMinSketch {
 
 	private findIndex(h1: number, h2: number, d: number) {
 		const h = h1 + safeishMultiply(h2, d);
-		return d * this.width + (h & (this.width - 1));
+		return (d * this.width) + (h & (this.width - 1));
 	}
 
 	public update(hashCode: number) {
@@ -70,7 +71,7 @@ export class CountMinSketch {
 
 		const h2 = hash2(hashCode);
 		let added = false;
-		for(let i=0, n=this.depth; i<n; i++) {
+		for(let i = 0, n = this.depth; i < n; i++) {
 			const idx = this.findIndex(hashCode, h2, i);
 			const v = table[idx];
 			if(v + 1 < maxSize && v <= estimate) {
@@ -89,7 +90,7 @@ export class CountMinSketch {
 		const h2 = hash2(hashCode);
 
 		let result = this.maxSize;
-		for(let i=0, n=this.depth; i<n; i++) {
+		for(let i = 0, n = this.depth; i < n; i++) {
 			const value = table[this.findIndex(hashCode, h2, i)];
 			if(value < result) {
 				result = value;
@@ -102,7 +103,7 @@ export class CountMinSketch {
 	private performReset() {
 		const table = this.table;
 		this.additions /= 2;
-		for(let i=0, n=table.length; i<n; i++) {
+		for(let i = 0, n = table.length; i < n; i++) {
 			this.additions -= table[i] & 1;
 			table[i] = Math.floor(table[i] >>> 1);
 		}
@@ -112,7 +113,7 @@ export class CountMinSketch {
 		return hashcode(key);
 	}
 
-	public static uint8(width: number, depth: number, decay=true) {
+	public static uint8(width: number, depth: number, decay = true) {
 		return new CountMinSketch(width, depth, decay);
 	}
 }
