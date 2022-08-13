@@ -39,6 +39,17 @@ export class DefaultLoadingCache<K extends KeyType, V> extends WrappedCache<K, V
 		};
 	}
 
+	/**
+	 * Get cached value or load it if not currently cached. Updates the usage
+	 * of the key.
+	 *
+	 * @param key -
+	 *   key to get
+	 * @param loader -
+	 *   optional loader to use for loading the object
+	 * @returns
+	 *   promise that resolves to the loaded value
+	 */
 	public get(key: K, loader?: Loader<K, V>): Promise<V> {
 		const currentValue = this.getIfPresent(key);
 		if(currentValue !== null) {

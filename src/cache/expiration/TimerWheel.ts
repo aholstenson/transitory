@@ -3,6 +3,14 @@ import { KeyType } from '../KeyType';
 
 import { Expirable } from './Expirable';
 
+/**
+ * Helper function to calculate the closest power of two to N.
+ *
+ * @param n -
+ *   input
+ * @returns
+ *   closest power of two to `n`
+ */
 function toPowerOfN(n: number) {
 	return Math.pow(2, Math.ceil(Math.log(n) / Math.LN2));
 }
@@ -138,6 +146,13 @@ export class TimerWheel<K extends KeyType, V> {
 	/**
 	 * Create a node that that helps with tracking when a key and value
 	 * should be evicted.
+	 *
+	 * @param key -
+	 *   key to set
+	 * @param value -
+	 *   value to set
+	 * @returns
+	 *   node
 	 */
 	public node(key: K, value: V): TimerNode<K, V> {
 		return new TimerNode(this, key, value);
@@ -145,6 +160,13 @@ export class TimerWheel<K extends KeyType, V> {
 
 	/**
 	 * Schedule eviction of the given node at the given timestamp.
+	 *
+	 * @param node -
+	 *   node to reschedule
+	 * @param time -
+	 *   new expiration time
+	 * @returns
+	 *   if the node was rescheduled
 	 */
 	public schedule(node: TimerNode<K, V>, time: number) {
 		node.remove();

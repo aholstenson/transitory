@@ -24,6 +24,13 @@ export interface Cache<K extends KeyType, V> {
 	/**
 	 * Store a value tied to the specified key. Returns the previous value or
 	 * `null` if no value currently exists for the given key.
+	 *
+	 * @param key -
+	 *   key to store value under
+	 * @param value -
+	 *   value to store
+	 * @returns
+	 *   current value or `null`
 	 */
 	set(key: K, value: V): V | null;
 
@@ -31,6 +38,11 @@ export interface Cache<K extends KeyType, V> {
 	 * Get the cached value for the specified key if it exists. Will return
 	 * the value or `null` if no cached value exist. Updates the usage of the
 	 * key.
+	 *
+	 * @param key -
+	 *   key to get
+	 * @returns
+	 *   current value or `null`
 	 */
 	getIfPresent(key: K): V | null;
 
@@ -41,24 +53,31 @@ export interface Cache<K extends KeyType, V> {
 	 *
 	 * In many cases `has(key)` is a better option to see if a key is present.
 	 *
-	 * @param key
+	 * @param key -
 	 *   the key to check
+	 * @returns
+	 *   value associated with key or `null`
 	 */
 	peek(key: K): V | null;
 
 	/**
 	 * Check if the given key exists in the cache.
 	 *
-	 * @param key
+	 * @param key -
+	 *   key to check
+	 * @returns
+	 *   `true` if value currently exists, `false` otherwise
 	 */
 	has(key: K): boolean;
 
 	/**
-	 * Delete a value in the cache. Returns the removed value or `null` if
+	 * Delete a value in the cache. Returns the deleted value or `null` if
 	 * there was no value associated with the key in the cache.
 	 *
-	 * @param key
+	 * @param key -
 	 *   the key to delete
+	 * @returns
+	 *   deleted value or `null`
 	 */
 	delete(key: K): V | null;
 
@@ -68,9 +87,13 @@ export interface Cache<K extends KeyType, V> {
 	clear(): void;
 
 	/**
-	 * Get all of the keys in the cache as an `Array`. Can be used to iterate
-	 * over all of the values in the cache, but be sure to protect against values
-	 * being removed during iteration due to time-based expiration if used.
+	 * Get all of the keys in the cache as an array. Can be used to iterate
+	 * over all of the values in the cache, but be sure to protect against
+	 * values being removed during iteration due to time-based expiration if
+	 * used.
+	 *
+	 * @returns
+	 *   snapshot of keys
 	 */
 	keys(): K[];
 

@@ -2,10 +2,25 @@ import { KeyType } from '../KeyType';
 
 import { hashcode } from './hashcode';
 
+/**
+ * Helper function to calculate the closest power of two to N.
+ *
+ * @param n -
+ *   input
+ * @returns
+ *   closest power of two to `n`
+ */
 function toPowerOfN(n: number) {
 	return Math.pow(2, Math.ceil(Math.log(n) / Math.LN2));
 }
 
+/**
+ * Calculates a component of the hash.
+ *
+ * @param a0 -
+ * @returns
+ *   hash
+ */
 function hash2(a0: number) {
 	let a = (a0 ^ 61) ^ (a0 >>> 16);
 	a = a + (a << 3);
@@ -15,6 +30,13 @@ function hash2(a0: number) {
 	return a;
 }
 
+/**
+ * Tiny helper to perform a multiply that's slightly safer to use for hashing.
+ *
+ * @param a -
+ * @param b -
+ * @returns a * b
+ */
 function safeishMultiply(a: number, b: number) {
 	return ((a & 0xffff) * b) + ((((a >>> 16) * b) & 0xffff) << 16);
 }

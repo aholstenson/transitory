@@ -38,10 +38,28 @@ export class MetricsCache<K extends KeyType, V> extends WrappedCache<K, V> {
 		};
 	}
 
+	/**
+	 * Get metrics for this cache. Returns an object with the keys `hits`,
+	 * `misses` and `hitRate`. For caches that do not have metrics enabled
+	 * trying to access metrics will throw an error.
+	 *
+	 * @returns
+	 *   metrics of cache
+	 */
 	public get metrics(): Metrics {
 		return this[METRICS];
 	}
 
+	/**
+	 * Get the cached value for the specified key if it exists. Will return
+	 * the value or `null` if no cached value exist. Updates the usage of the
+	 * key.
+	 *
+	 * @param key -
+	 *   key to get
+	 * @returns
+	 *   current value or `null`
+	 */
 	public getIfPresent(key: K): V | null {
 		const result = super.getIfPresent(key);
 

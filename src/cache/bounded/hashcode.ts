@@ -1,12 +1,26 @@
 const C1 = 0xcc9e2d51;
 const C2 = 0x1b873593;
 
+/**
+ * Tiny helper to perform a multiply that's slightly safer to use for hashing.
+ *
+ * @param a -
+ * @param b -
+ * @returns a * b
+ */
 function safeishMultiply(a: number, b: number) {
 	return ((a & 0xffff) * b) + ((((a >>> 16) * b) & 0xffff) << 16);
 }
 
 /**
  * Utility for calculating stable hashcodes for keys used in a cache.
+ *
+ * @param obj -
+ *   object to hash
+ * @param seed -
+ *   seed to hash with
+ * @returns
+ *   hash code
  */
 export function hashcode(obj: string | number | boolean | null, seed = 0) {
 	switch(typeof obj) {

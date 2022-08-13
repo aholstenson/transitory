@@ -2,6 +2,14 @@ import { CacheNode } from '../cache/CacheNode';
 
 const OBJ_OVERHEAD = 4;
 
+/**
+ * Estimate the memory usage of the given object.
+ *
+ * @param value -
+ *   value to estimates
+ * @returns
+ *   estimated memory usage in bytes
+ */
 export function memoryEstimator(value: any): number {
 	switch(typeof value) {
 		case 'string':

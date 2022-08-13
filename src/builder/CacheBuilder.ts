@@ -86,6 +86,10 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 	/**
 	 * Set a listener that will be called every time something is removed
 	 * from the cache.
+	 *
+	 * @param listener -
+	 *   removal listener to use
+	 * @returns self
 	 */
 	public withRemovalListener(listener: RemovalListener<K, V>) {
 		this.optRemovalListener = listener;
@@ -95,6 +99,10 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 	/**
 	 * Set the maximum number of items to keep in the cache before evicting
 	 * something.
+	 *
+	 * @param size -
+	 *   number of items to keep
+	 * @returns self
 	 */
 	public maxSize(size: number) {
 		this.optMaxSize = size;
@@ -103,6 +111,10 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 
 	/**
 	 * Set a function to use to determine the size of a cached object.
+	 *
+	 * @param weigher -
+	 *   function used to weight objects
+	 * @returns self
 	 */
 	public withWeigher(weigher: Weigher<K, V>) {
 		if(typeof weigher !== 'function') {
@@ -115,6 +127,8 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 	/**
 	 * Change to a cache where get can also resolve values if provided with
 	 * a function as the second argument.
+	 *
+	 * @returns self
 	 */
 	public loading(): LoadingCacheBuilder<K, V> {
 		return new LoadingCacheBuilderImpl(this, null);
@@ -123,6 +137,10 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 	/**
 	 * Change to a loading cache, where the get-method will return instances
 	 * of Promise and automatically load unknown values.
+	 *
+	 * @param loader -
+	 *   function used to load objects
+	 * @returns self
 	 */
 	public withLoader(loader: Loader<K, V>): LoadingCacheBuilder<K, V> {
 		if(typeof loader !== 'function') {
@@ -133,6 +151,11 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 
 	/**
 	 * Set that the cache should expire items after some time.
+	 *
+	 * @param time -
+	 *   max time in milliseconds, or function that will be asked per key/value
+	 *   for expiration time
+	 * @returns self
 	 */
 	public expireAfterWrite(time: number | MaxAgeDecider<K, V>) {
 		let evaluator;
@@ -149,6 +172,11 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 
 	/**
 	 * Set that the cache should expire items some time after they have been read.
+	 *
+	 * @param time -
+	 *   max time in milliseconds, or function will be asked per key/value
+	 *   for expiration time
+	 * @returns self
 	 */
 	public expireAfterRead(time: number | MaxAgeDecider<K, V>): this {
 		let evaluator;
@@ -165,6 +193,8 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 
 	/**
 	 * Activate tracking of metrics for this cache.
+	 *
+	 * @returns self
 	 */
 	public metrics(): this {
 		this.optMetrics = true;
@@ -173,6 +203,8 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 
 	/**
 	 * Build and return the cache.
+	 *
+	 * @returns cache
 	 */
 	public build() {
 		let cache: Cache<K, V>;
@@ -282,6 +314,12 @@ class LoadingCacheBuilderImpl<K extends KeyType, V> implements LoadingCacheBuild
 	}
 }
 
+/**
+ * Helper function to create a weigher that uses an Expirable object.
+ *
+ * @param w -
+ * @returns weigher
+ */
 function createExpirableWeigher<K extends KeyType, V>(w: Weigher<K, V> | undefined): Weigher<K, Expirable<V>> | null {
 	if(! w) return null;
 

@@ -8,7 +8,7 @@ import { ON_REMOVE, ON_MAINTENANCE } from './symbols';
  */
 export interface CacheSPI<K extends KeyType, V> {
 	/**
-	 * Called when a key is removed from the cache. Intended to be overriden
+	 * Called when a key is removed from the cache. Intended to be overridden
 	 * so that the value and removal reason can be modified.
 	 */
 	[ON_REMOVE]?: RemovalListener<K, V>;

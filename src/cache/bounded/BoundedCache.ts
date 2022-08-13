@@ -289,6 +289,9 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 
 	/**
 	 * Get the maximum size this cache can be.
+	 *
+	 * @returns
+	 *   maximum size of the cache
 	 */
 	public get maxSize() {
 		return this[DATA].maxSize;
@@ -296,6 +299,9 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 
 	/**
 	 * Get the current size of the cache.
+	 *
+	 * @returns
+	 *   items currently in the cache
 	 */
 	public get size() {
 		return this[DATA].values.size;
@@ -303,13 +309,24 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 
 	/**
 	 * Get the weighted size of all items in the cache.
+	 *
+	 * @returns
+	 *   the weighted size of all items in the cache
 	 */
 	public get weightedSize() {
 		return this[DATA].weightedSize;
 	}
 
 	/**
-	 * Cache and associate a value with the given key.
+	 * Store a value tied to the specified key. Returns the previous value or
+	 * `null` if no value currently exists for the given key.
+	 *
+	 * @param key -
+	 *   key to store value under
+	 * @param value -
+	 *   value to store
+	 * @returns
+	 *   current value or `null`
 	 */
 	public set(key: K, value: V): V | null {
 		const data = this[DATA];
@@ -377,7 +394,14 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 	}
 
 	/**
-	 * Get a previously cached value.
+	 * Get the cached value for the specified key if it exists. Will return
+	 * the value or `null` if no cached value exist. Updates the usage of the
+	 * key.
+	 *
+	 * @param key -
+	 *   key to get
+	 * @returns
+	 *   current value or `null`
 	 */
 	public getIfPresent(key: K) {
 		const data = this[DATA];
@@ -429,6 +453,18 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		return node.value;
 	}
 
+	/**
+	 * Peek to see if a key is present without updating the usage of the
+	 * key. Returns the value associated with the key or `null`  if the key
+	 * is not present.
+	 *
+	 * In many cases `has(key)` is a better option to see if a key is present.
+	 *
+	 * @param key -
+	 *   the key to check
+	 * @returns
+	 *   value associated with key or `null`
+	 */
 	public peek(key: K) {
 		const data = this[DATA];
 		const node = data.values.get(key);
@@ -436,7 +472,13 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 	}
 
 	/**
-	 * Delete any value associated with the given key from the cache.
+	 * Delete a value in the cache. Returns the deleted value or `null` if
+	 * there was no value associated with the key in the cache.
+	 *
+	 * @param key -
+	 *   the key to delete
+	 * @returns
+	 *   deleted value or `null`
 	 */
 	public delete(key: K) {
 		const data = this[DATA];
@@ -476,13 +518,21 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 	}
 
 	/**
-	 * Check if a certain value exists in the cache.
+	 * Check if the given key exists in the cache.
+	 *
+	 * @param key -
+	 *   key to check
+	 * @returns
+	 *   `true` if value currently exists, `false` otherwise
 	 */
 	public has(key: K) {
 		const data = this[DATA];
 		return data.values.has(key);
 	}
 
+	/**
+	 * Clear the cache removing all of the entries cached.
+	 */
 	public clear() {
 		const data = this[DATA];
 
@@ -507,15 +557,38 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 		}
 	}
 
+	/**
+	 * Get all of the keys in the cache as an array. Can be used to iterate
+	 * over all of the values in the cache, but be sure to protect against
+	 * values being removed during iteration due to time-based expiration if
+	 * used.
+	 *
+	 * @returns
+	 *   snapshot of keys
+	 */
 	public keys(): K[] {
 		this[MAINTENANCE]();
 		return Array.from(this[DATA].values.keys());
 	}
 
+	/**
+	 * Request clean up of the cache by removing expired entries and
+	 * old data. Clean up is done automatically a short time after sets and
+	 * deletes, but if your cache uses time-based expiration and has very
+	 * sporadic updates it might be a good idea to call `cleanUp()` at times.
+	 *
+	 * A good starting point would be to call `cleanUp()` in a `setInterval`
+	 * with a delay of at least a few minutes.
+	 */
 	public cleanUp() {
 		this[MAINTENANCE]();
 	}
 
+	/**
+	 * Get metrics for this cache. Returns an object with the keys `hits`,
+	 * `misses` and `hitRate`. For caches that do not have metrics enabled
+	 * trying to access metrics will throw an error.
+	 */
 	public get metrics(): Metrics {
 		throw new Error('Metrics are not supported by this cache');
 	}
@@ -665,7 +738,7 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
  *   chunks. At every invocation it currently moves a maximum of 1000 nodes
  *   around.
  *
- * @param data
+ * @param data -
  */
 function adaptiveAdjustment<K extends KeyType, V>(data: BoundedCacheData<K, V>) {
 	/*
@@ -688,7 +761,7 @@ function adaptiveAdjustment<K extends KeyType, V>(data: BoundedCacheData<K, V>) 
  * Evict nodes from the protected segment to the probation segment if there
  * are too many nodes in the protected segment.
  *
- * @param data
+ * @param data -
  */
 function evictProtectedToProbation<K extends KeyType, V>(data: BoundedCacheData<K, V>) {
 	/*
@@ -711,6 +784,7 @@ function evictProtectedToProbation<K extends KeyType, V>(data: BoundedCacheData<
  * enough samples to do a step and if so perform a simple hill climbing to
  * find the new adjustment.
  *
+ * @param data -
  * @returns
  *   `true` if an adjustment occurred, `false` otherwise
  */
@@ -754,7 +828,7 @@ function calculateAdaptiveAdjustment<K extends KeyType, V>(data: BoundedCacheDat
  * segment. The method will then move nodes from the probation and protected
  * segment the window segment.
  *
- * @param data
+ * @param data -
  */
 function increaseWindowSegmentSize<K extends KeyType, V>(data: BoundedCacheData<K, V>) {
 	if(data.protected.maxSize === 0) {
@@ -825,7 +899,7 @@ function increaseWindowSegmentSize<K extends KeyType, V>(data: BoundedCacheData<
  * will be moved from the window segment into the probation segment, where
  * they are later moved to the protected segment when they are accessed.
  *
- * @param data
+ * @param data -
  */
 function decreaseWindowSegmentSize<K extends KeyType, V>(data: BoundedCacheData<K, V>) {
 	if(data.window.maxSize <= 1) {
