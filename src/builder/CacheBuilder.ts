@@ -1,3 +1,4 @@
+import { NoopMetrics, StandardMetrics } from '../cache';
 import { BoundedCache } from '../cache/bounded/BoundedCache';
 import { BoundlessCache } from '../cache/boundless/BoundlessCache';
 import { Cache } from '../cache/Cache';
@@ -5,10 +6,8 @@ import { Expirable } from '../cache/expiration/Expirable';
 import { ExpirationCache } from '../cache/expiration/ExpirationCache';
 import { MaxAgeDecider } from '../cache/expiration/MaxAgeDecider';
 import { KeyType } from '../cache/KeyType';
-import { DefaultLoadingCache } from '../cache/loading/DefaultLoadingCache';
 import { Loader } from '../cache/loading/Loader';
 import { LoadingCache } from '../cache/loading/LoadingCache';
-import { MetricsCache } from '../cache/metrics/MetricsCache';
 import { RemovalListener } from '../cache/RemovalListener';
 import { Weigher } from '../cache/Weigher';
 
@@ -17,24 +16,26 @@ export interface CacheBuilder<K extends KeyType, V> {
 	 * Set a listener that will be called every time something is removed
 	 * from the cache.
 	 */
-	withRemovalListener(listener: RemovalListener<K, V>): this;
+	withRemovalListener(listener: RemovalListener<K, V>): CacheBuilder<K, V>;
 
 	/**
 	 * Set the maximum number of items to keep in the cache before evicting
 	 * something.
 	 */
-	maxSize(size: number): this;
+	maxSize(size: number): CacheBuilder<K, V>;
 
 	/**
 	 * Set a function to use to determine the size of a cached object.
 	 */
-	withWeigher(weigher: Weigher<K, V>): this;
+	withWeigher(weigher: Weigher<K, V>): CacheBuilder<K, V>;
 
 	/**
 	 * Change to a cache where get can also resolve values if provided with
 	 * a function as the second argument.
+	 *
+	 * @deprecated - all caches support loading with a second parameter
 	 */
-	loading(): LoadingCacheBuilder<K, V>;
+	loading(): CacheBuilder<K, V>;
 
 	/**
 	 * Change to a loading cache, where the get-method will return instances
@@ -46,18 +47,18 @@ export interface CacheBuilder<K extends KeyType, V> {
 	 * Set that the cache should expire items some time after they have been
 	 * written to the cache.
 	 */
-	expireAfterWrite(time: number | MaxAgeDecider<K, V>): this;
+	expireAfterWrite(time: number | MaxAgeDecider<K, V>): CacheBuilder<K, V>;
 
 	/**
 	 * Set that the cache should expire items some time after they have been
 	 * read from the cache.
 	 */
-	expireAfterRead(time: number | MaxAgeDecider<K, V>): this;
+	expireAfterRead(time: number | MaxAgeDecider<K, V>): CacheBuilder<K, V>;
 
 	/**
 	 * Activate tracking of metrics for this cache.
 	 */
-	metrics(): this;
+	metrics(): CacheBuilder<K, V>;
 
 	/**
 	 * Build the cache.
@@ -82,6 +83,7 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 	private optMaxWriteAge?: MaxAgeDecider<K, V>;
 	private optMaxNoReadAge?: MaxAgeDecider<K, V>;
 	private optMetrics: boolean = false;
+	private optLoader?: Loader<K, V>;
 
 	/**
 	 * Set a listener that will be called every time something is removed
@@ -129,9 +131,11 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 	 * a function as the second argument.
 	 *
 	 * @returns self
+	 *
+	 * @deprecated all caches accept a loader as a parameter.
 	 */
-	public loading(): LoadingCacheBuilder<K, V> {
-		return new LoadingCacheBuilderImpl(this, null);
+	public loading(): CacheBuilder<K, V> {
+		return this;
 	}
 
 	/**
@@ -146,7 +150,8 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 		if(typeof loader !== 'function') {
 			throw new Error('Loader should be a function that takes a key and returns a value or a promise that resolves to a value');
 		}
-		return new LoadingCacheBuilderImpl(this, loader);
+		this.optLoader = loader;
+		return this as LoadingCacheBuilder<K, V>;
 	}
 
 	/**
@@ -208,6 +213,10 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 	 */
 	public build() {
 		let cache: Cache<K, V>;
+
+		const metrics = this.optMetrics ? new StandardMetrics() : NoopMetrics;
+		const loader = this.optLoader;
+
 		if(typeof this.optMaxWriteAge !== 'undefined' || typeof this.optMaxNoReadAge !== 'undefined') {
 			/*
 			 * Requested expiration - wrap the base cache a bit as it needs
@@ -230,87 +239,29 @@ export class CacheBuilderImpl<K extends KeyType, V> implements CacheBuilder<K, V
 
 				removalListener: this.optRemovalListener,
 
-				parent: parentCache
+				parent: parentCache,
+				metrics,
+				loader,
 			});
 		} else {
 			if(this.optMaxSize) {
 				cache = new BoundedCache({
 					maxSize: this.optMaxSize,
 					weigher: this.optWeigher,
-					removalListener: this.optRemovalListener
+					removalListener: this.optRemovalListener,
+					metrics,
+					loader,
 				});
 			} else {
 				cache = new BoundlessCache({
-					removalListener: this.optRemovalListener
+					removalListener: this.optRemovalListener,
+					metrics,
+					loader,
 				});
 			}
 		}
 
-		if(this.optMetrics) {
-			// Collect metrics if requested
-			cache = new MetricsCache({
-				parent: cache
-			});
-		}
-
 		return cache;
-	}
-}
-
-class LoadingCacheBuilderImpl<K extends KeyType, V> implements LoadingCacheBuilder<K, V> {
-	private parent: CacheBuilder<K, V>;
-	private loader: Loader<K, V> | null;
-
-	public constructor(parent: CacheBuilder<K, V>, loader: Loader<K, V> | null) {
-		this.parent = parent;
-		this.loader = loader;
-	}
-
-	public withRemovalListener(listener: RemovalListener<K, V>): this {
-		this.parent.withRemovalListener(listener);
-		return this;
-	}
-
-	public maxSize(size: number): this {
-		this.parent.maxSize(size);
-		return this;
-	}
-
-	public withWeigher(weigher: Weigher<K, V>): this {
-		this.parent.withWeigher(weigher);
-		return this;
-	}
-
-	public loading(): LoadingCacheBuilder<K, V> {
-		throw new Error('Already building a loading cache');
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	public withLoader(loader: Loader<K, V>): LoadingCacheBuilder<K, V> {
-		throw new Error('Already building a loading cache');
-	}
-
-	public expireAfterWrite(time: number | MaxAgeDecider<K, V>): this {
-		this.parent.expireAfterWrite(time);
-		return this;
-	}
-
-	public expireAfterRead(time: number | MaxAgeDecider<K, V>): this {
-		this.parent.expireAfterRead(time);
-		return this;
-	}
-
-	public metrics(): this {
-		this.parent.metrics();
-		return this;
-	}
-
-	public build(): LoadingCache<K, V> {
-		return new DefaultLoadingCache({
-			loader: this.loader,
-
-			parent: this.parent.build()
-		});
 	}
 }
 

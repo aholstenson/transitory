@@ -3,14 +3,17 @@ import { Cache } from '../Cache';
 import { CacheNode } from '../CacheNode';
 import { CacheSPI } from '../CacheSPI';
 import { KeyType } from '../KeyType';
+import { Loader, resolveLoader } from '../loading';
+import { LoaderManager, LoaderResult } from '../loading/LoaderManager';
 import { Metrics } from '../metrics/Metrics';
+import { MetricsRecorder } from '../metrics/MetricsRecorder';
+import { NoopMetrics } from '../metrics/NoopMetrics';
 import { RemovalListener } from '../RemovalListener';
 import { RemovalReason } from '../RemovalReason';
 import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE, MAINTENANCE } from '../symbols';
 import { Weigher } from '../Weigher';
 
 import { CountMinSketch } from './CountMinSketch';
-
 
 const percentInMain = 0.99;
 const percentProtected = 0.8;
@@ -44,27 +47,32 @@ export interface BoundedCacheOptions<K extends KeyType, V> {
 	 * Listener to call whenever something is removed from the cache.
 	 */
 	removalListener?: RemovalListener<K, V> | null;
+
+	/**
+	 * The default loader for this cache.
+	 */
+	loader?: Loader<K, V> | undefined | null;
+
+	/**
+	 * Metrics recorder for this cache.
+	 */
+	metrics?: MetricsRecorder;
 }
 
 /**
  * Data as used by the bounded cache.
  */
-interface BoundedCacheData<K extends KeyType, V> {
+interface BoundedCacheData<K extends KeyType, V> extends BoundedCacheOptions<K, V> {
 	/**
 	 * Values within the cache.
 	 */
 	values: Map<K, BoundedNode<K, V>>;
 
 	/**
-	 * The maximum size of the cache or -1 if the cache uses weighing.
+	 * Manages all loader promises.
 	 */
-	maxSize: number;
+	promises: LoaderManager<K, V>;
 
-	/**
-	 * Weigher being used for this cache. Invoked to determine the weight of
-	 * an item being cached.
-	 */
-	weigher: Weigher<K, V> | null;
 	/**
 	 * Maximum size of the cache as a weight.
 	 */
@@ -73,11 +81,6 @@ interface BoundedCacheData<K extends KeyType, V> {
 	 * The current weight of all items in the cache.
 	 */
 	weightedSize: number;
-
-	/**
-	 * Listener to invoke when removals occur.
-	 */
-	removalListener: RemovalListener<K, V> | null;
 
 	/**
 	 * Sketch used to keep track of the frequency of which items are used.
@@ -122,6 +125,11 @@ interface BoundedCacheData<K extends KeyType, V> {
 	 * SLRU probation segment, 20% * (100% - windowSize) of the total cache
 	 */
 	probation: ProbationSection<K, V>;
+
+	/**
+	 * Metrics recorder for this cache.
+	 */
+	metrics: MetricsRecorder;
 }
 
 /**
@@ -283,7 +291,15 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 
 			maintenanceTimeout: null,
 			forceEvictionLimit: options.maxSize + Math.max(Math.floor(options.maxSize * percentOverflow), 5),
-			maintenanceInterval: 5000
+			maintenanceInterval: 5000,
+
+			metrics: options.metrics ?? NoopMetrics,
+
+			loader: options.loader,
+
+			promises: new LoaderManager((key, value) => {
+				this.set(key, value);
+			}),
 		};
 	}
 
@@ -404,53 +420,29 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 	 *   current value or `null`
 	 */
 	public getIfPresent(key: K) {
-		const data = this[DATA];
+		const node = this.getNodeIfPresent(key);
+		return node?.value ?? null;
+	}
 
-		const node = data.values.get(key);
-		if(! node) {
-			// This value does not exist in the cache
-			data.adaptiveData.misses++;
-			return null;
+	/**
+	 * Get cached value or load it if not currently cached. Updates the usage
+	 * of the key.
+	 *
+	 * @param key -
+	 *   key to get
+	 * @param loader -
+	 *   optional loader to use for loading the object
+	 * @returns
+	 *   promise that resolves to the loaded value
+	 */
+	public get<R extends V | undefined | null>(key: K, loader?: Loader<K, V>): Promise<LoaderResult<R>> {
+		const existingNode = this.getNodeIfPresent(key);
+
+		if(existingNode && existingNode.value !== null) {
+			return Promise.resolve(existingNode.value as LoaderResult<R>);
 		}
 
-		// Keep track of the hit
-		data.adaptiveData.hits++;
-
-		// Register access to the key
-		data.sketch.update(node.hashCode);
-
-		switch(node.location) {
-			case Location.WINDOW:
-				// In window cache, mark as most recently used
-				node.moveToTail(data.window.head);
-				break;
-			case Location.PROBATION:
-				// In SLRU probation segment, move to protected
-				node.location = Location.PROTECTED;
-				node.moveToTail(data.protected.head);
-
-				// Plenty of room, keep track of the size
-				data.protected.size += node.weight;
-
-				while(data.protected.size > data.protected.maxSize) {
-					/*
-					 * There is now too many nodes in the protected segment
-					 * so demote the least recently used.
-					 */
-					const lru = data.protected.head.next;
-					lru.location = Location.PROBATION;
-					lru.moveToTail(data.probation.head);
-					data.protected.size -= lru.weight;
-				}
-
-				break;
-			case Location.PROTECTED:
-				// SLRU protected segment, mark as most recently used
-				node.moveToTail(data.protected.head);
-				break;
-		}
-
-		return node.value;
+		return this[DATA].promises.get(key, resolveLoader(this[DATA].loader, loader)) as Promise<LoaderResult<R>>;
 	}
 
 	/**
@@ -588,9 +580,74 @@ export class BoundedCache<K extends KeyType, V> extends AbstractCache<K, V> impl
 	 * Get metrics for this cache. Returns an object with the keys `hits`,
 	 * `misses` and `hitRate`. For caches that do not have metrics enabled
 	 * trying to access metrics will throw an error.
+	 *
+	 * @returns
+	 *   the metrics for this cache
 	 */
 	public get metrics(): Metrics {
-		throw new Error('Metrics are not supported by this cache');
+		return this[DATA].metrics;
+	}
+
+	/**
+	 * Get the cached value for the specified key if it exists. Will return
+	 * the value or `null` if no cached value exist. Updates the usage of the
+	 * key.
+	 *
+	 * @param key -
+	 *   key to get
+	 * @returns
+	 *   current value or `null`
+	 */
+	protected getNodeIfPresent(key: K): BoundedNode<K, V> | null {
+		const data = this[DATA];
+
+		const node = data.values.get(key);
+		if(! node) {
+			// This value does not exist in the cache
+			data.metrics.miss();
+			data.adaptiveData.misses += 1;
+			return null;
+		}
+
+		// Keep track of the hit
+		data.metrics.hit();
+		data.adaptiveData.hits += 1;
+
+		// Register access to the key
+		data.sketch.update(node.hashCode);
+
+		switch(node.location) {
+			case Location.WINDOW:
+				// In window cache, mark as most recently used
+				node.moveToTail(data.window.head);
+				break;
+			case Location.PROBATION:
+				// In SLRU probation segment, move to protected
+				node.location = Location.PROTECTED;
+				node.moveToTail(data.protected.head);
+
+				// Plenty of room, keep track of the size
+				data.protected.size += node.weight;
+
+				while(data.protected.size > data.protected.maxSize) {
+					/*
+					 * There is now too many nodes in the protected segment
+					 * so demote the least recently used.
+					 */
+					const lru = data.protected.head.next;
+					lru.location = Location.PROBATION;
+					lru.moveToTail(data.probation.head);
+					data.protected.size -= lru.weight;
+				}
+
+				break;
+			case Location.PROTECTED:
+				// SLRU protected segment, mark as most recently used
+				node.moveToTail(data.protected.head);
+				break;
+		}
+
+		return node;
 	}
 
 	private [TRIGGER_REMOVE](key: K, value: any, cause: RemovalReason) {

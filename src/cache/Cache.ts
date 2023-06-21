@@ -1,11 +1,12 @@
 import { KeyType } from './KeyType';
+import { Loader } from './loading/Loader';
+import { LoaderResult } from './loading/LoaderManager';
 import { Metrics } from './metrics/Metrics';
 
 /**
  * Cache for a mapping between keys and values.
  */
 export interface Cache<K extends KeyType, V> {
-
 	/**
 	 * The maximum size the cache can be. Will be -1 if the cache is unbounded.
 	 */
@@ -45,6 +46,19 @@ export interface Cache<K extends KeyType, V> {
 	 *   current value or `null`
 	 */
 	getIfPresent(key: K): V | null;
+
+	/**
+	 * Get cached value or load it if not currently cached. Updates the usage
+	 * of the key.
+	 *
+	 * @param key -
+	 *   key to get
+	 * @param loader -
+	 *   optional loader to use for loading the object
+	 * @returns
+	 *   promise that resolves to the loaded value
+	 */
+	get<R extends V | null | undefined>(key: K, loader: Loader<K, V>): Promise<LoaderResult<R>>;
 
 	/**
 	 * Peek to see if a key is present without updating the usage of the

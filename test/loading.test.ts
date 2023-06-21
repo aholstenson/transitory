@@ -1,7 +1,7 @@
-
+import { newCache as newCacheImpl } from '../src/builder';
 import { BoundlessCache } from '../src/cache/boundless';
 import { KeyType } from '../src/cache/KeyType';
-import { DefaultLoadingCache, Loader } from '../src/cache/loading';
+import { Loader } from '../src/cache/loading';
 import { RemovalReason } from '../src/cache/RemovalReason';
 
 import { RemovalHelper } from './removal-helper';
@@ -11,10 +11,11 @@ import { RemovalHelper } from './removal-helper';
  * @param loader
  */
 function newCache<K extends KeyType, V>(loader?: Loader<K, V>) {
-	return new DefaultLoadingCache({
-		loader: loader,
-		parent: new BoundlessCache<K, V>({})
-	});
+	const builder = newCacheImpl<K, V>();
+	if(loader) {
+		return builder.withLoader(loader).build();
+	}
+	return builder.build();
 }
 
 describe('LoadingCache', function() {
@@ -85,6 +86,48 @@ describe('LoadingCache', function() {
 				throw Error('This should have failed');
 			})
 			.catch(() => null);
+	});
+
+	it('Caches loader promises for concurrent gets', async function() {
+		const resolves: Array<() => void> = [];
+		const cache = newCache<number, string>(k => {
+			return new Promise(resolve => {
+				resolves.push(() => {
+					resolve((k * 2).toString());
+				});
+			});
+		});
+
+		const promise1 = cache.get(100);
+		const promise2 = cache.get(100);
+		const promise3 = cache.get(100, () => 'whatever');
+		const promise4 = cache.get(200);
+
+		expect(promise1).toBe(promise2);
+		expect(promise2).toBe(promise3);
+		expect(promise1).not.toBe(promise4);
+
+		resolves.forEach(r => r());
+
+		expect(await promise1).toBe('200');
+		expect(await promise2).toBe('200');
+		expect(await promise3).toBe('200');
+		expect(await promise4).toBe('400');
+	});
+
+	it.each([
+		[ 'Standard', newCacheImpl<number, string>().metrics().build() ],
+		[ 'Bounded', newCacheImpl<number, string>().metrics().maxSize(100).build() ],
+		[ 'Expiring', newCacheImpl<number, string>().metrics().expireAfterRead(1000).build() ],
+	])('%s cache does not load null values', async (_type, cache) => {
+		const result1 = await cache.get(100, () => null); // misses +1
+		expect(result1).toBe(null);
+		expect(cache.metrics).toMatchObject({ hits: 0, misses: 1 });
+		expect(cache.size).toBe(0);
+		expect(cache.has(100)).toBe(false);
+		expect(cache.peek(100)).toBe(null);
+		expect(cache.getIfPresent(100)).toBe(null); // misses +1
+		expect(cache.metrics).toMatchObject({ hits: 0, misses: 2 });
 	});
 
 	describe('Removal listeners', function() {
