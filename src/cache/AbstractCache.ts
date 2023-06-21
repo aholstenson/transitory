@@ -1,5 +1,7 @@
 import { Cache } from './Cache';
 import { KeyType } from './KeyType';
+import { Loader } from './loading';
+import { LoaderResult } from './loading/LoaderManager';
 import { Metrics } from './metrics/Metrics';
 
 /**
@@ -12,6 +14,7 @@ export abstract class AbstractCache<K extends KeyType, V> implements Cache<K, V>
 	public abstract weightedSize: number;
 
 	public abstract set(key: K, value: V): V | null;
+	public abstract get<R extends V | undefined | null>(key: K, loader?: Loader<K, V> | undefined): Promise<LoaderResult<R>> ;
 	public abstract getIfPresent(key: K): V | null;
 	public abstract peek(key: K): V | null;
 	public abstract has(key: K): boolean;

@@ -2,7 +2,12 @@ import { AbstractCache } from '../AbstractCache';
 import { Cache } from '../Cache';
 import { CacheSPI } from '../CacheSPI';
 import { KeyType } from '../KeyType';
+import { Loader } from '../loading/Loader';
+import { LoaderManager, LoaderResult } from '../loading/LoaderManager';
+import { resolveLoader } from '../loading/LoadingCache';
 import { Metrics } from '../metrics/Metrics';
+import { MetricsRecorder } from '../metrics/MetricsRecorder';
+import { NoopMetrics } from '../metrics/NoopMetrics';
 import { RemovalListener } from '../RemovalListener';
 import { RemovalReason } from '../RemovalReason';
 import { ON_REMOVE, ON_MAINTENANCE, TRIGGER_REMOVE, MAINTENANCE } from '../symbols';
@@ -19,17 +24,35 @@ export interface BoundlessCacheOptions<K extends KeyType, V> {
 	 * Listener that triggers when a cached value is removed.
 	 */
 	removalListener?: RemovalListener<K, V> | undefined | null;
+
+	/**
+	 * The default loader for this cache.
+	 */
+	loader?: Loader<K, V> | undefined | null;
+
+	/**
+	 * Metrics recorder for this cache.
+	 */
+	metrics?: MetricsRecorder;
 }
 
 /**
  * Data as used by the boundless cache.
  */
-interface BoundlessCacheData<K extends KeyType, V> {
+interface BoundlessCacheData<K extends KeyType, V> extends BoundlessCacheOptions<K, V> {
 	values: Map<K, V>;
 
-	removalListener: RemovalListener<K, V> | null;
+	/**
+	 * Manages all loader promises.
+	 */
+	promises: LoaderManager<K, V>;
 
 	evictionTimeout: any;
+
+	/**
+	 * Metrics recorder for this cache.
+	 */
+	metrics: MetricsRecorder;
 }
 
 /**
@@ -49,7 +72,15 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 
 			removalListener: options.removalListener || null,
 
-			evictionTimeout: null
+			evictionTimeout: null,
+
+			metrics: options.metrics ?? NoopMetrics,
+
+			loader: options.loader,
+
+			promises: new LoaderManager((key, value) => {
+				this.set(key, value);
+			}),
 		};
 	}
 
@@ -129,7 +160,34 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 	public getIfPresent(key: K): V | null {
 		const data = this[DATA];
 		const value = data.values.get(key);
-		return value === undefined ? null : value;
+		if(value === undefined || value === null) {
+			data.metrics.miss();
+			return null;
+		}
+		data.metrics.hit();
+		return value;
+	}
+
+	/**
+	 * Get cached value or load it if not currently cached. Updates the usage
+	 * of the key.
+	 *
+	 * @param key -
+	 *   key to get
+	 * @param loader -
+	 *   optional loader to use for loading the object
+	 * @returns
+	 *   promise that resolves to the loaded value
+	 */
+	public get<R extends V | undefined | null>(key: K, loader?: Loader<K, V>): Promise<LoaderResult<R>> {
+		const data = this[DATA];
+		const value = data.values.get(key);
+		if(value !== null && value !== undefined) {
+			data.metrics.hit();
+			return Promise.resolve(value as LoaderResult<R>);
+		}
+		data.metrics.miss();
+		return this[DATA].promises.get(key, resolveLoader(this[DATA].loader, loader)) as Promise<LoaderResult<R>>;
 	}
 
 	/**
@@ -241,9 +299,12 @@ export class BoundlessCache<K extends KeyType, V> extends AbstractCache<K, V> im
 	 * Get metrics for this cache. Returns an object with the keys `hits`,
 	 * `misses` and `hitRate`. For caches that do not have metrics enabled
 	 * trying to access metrics will throw an error.
+	 *
+	 * @returns
+	 *   the metrics for this cache
 	 */
 	public get metrics(): Metrics {
-		throw new Error('Metrics are not supported by this cache');
+		return this[DATA].metrics;
 	}
 
 	private [TRIGGER_REMOVE](key: K, value: any, reason: RemovalReason) {

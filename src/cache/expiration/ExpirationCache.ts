@@ -1,10 +1,16 @@
 
+import { isPromise } from 'util/types';
+
 import { AbstractCache } from '../AbstractCache';
 import { Cache } from '../Cache';
 import { CacheSPI } from '../CacheSPI';
 import { CommonCacheOptions } from '../CommonCacheOptions';
 import { KeyType } from '../KeyType';
+import { Loader } from '../loading/Loader';
+import { LoaderResult } from '../loading/LoaderManager';
+import { NoopMetrics } from '../metrics';
 import { Metrics } from '../metrics/Metrics';
+import { MetricsRecorder } from '../metrics/MetricsRecorder';
 import { RemovalListener } from '../RemovalListener';
 import { RemovalReason } from '../RemovalReason';
 import { PARENT, ON_REMOVE, TRIGGER_REMOVE, ON_MAINTENANCE, MAINTENANCE } from '../symbols';
@@ -24,6 +30,16 @@ export interface ExpirationCacheOptions<K extends KeyType, V> extends CommonCach
 	maxNoReadAge?: MaxAgeDecider<K, V>;
 
 	parent: Cache<K, Expirable<V>>;
+
+	/**
+	 * The default loader for this cache.
+	 */
+	loader?: Loader<K, V> | undefined | null;
+
+	/**
+	 * Metrics recorder for this cache.
+	 */
+	metrics?: MetricsRecorder;
 }
 
 interface ExpirationCacheData<K extends KeyType, V> {
@@ -33,6 +49,16 @@ interface ExpirationCacheData<K extends KeyType, V> {
 
 	maxWriteAge?: MaxAgeDecider<K, V>;
 	maxNoReadAge?: MaxAgeDecider<K, V>;
+
+	/**
+	 * The default loader for this cache.
+	 */
+	loader?: Loader<K, Expirable<V>> | undefined | null;
+
+	/**
+	 * Metrics recorder for this cache.
+	 */
+	metrics: MetricsRecorder;
 }
 
 /**
@@ -52,17 +78,23 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 
 		this[PARENT] = options.parent;
 
+		const timerWheel = new TimerWheel<K, V>(keys => {
+			for(const key of keys) {
+				this.delete(key);
+			}
+		});
+
 		this[DATA] = {
 			maxWriteAge: options.maxWriteAge,
 			maxNoReadAge: options.maxNoReadAge,
 
 			removalListener: options.removalListener || null,
 
-			timerWheel: new TimerWheel(keys => {
-				for(const key of keys) {
-					this.delete(key);
-				}
-			})
+			timerWheel,
+
+			metrics: options.metrics ?? NoopMetrics,
+
+			loader: options.loader ? wrapLoader(timerWheel, options.loader) : undefined,
 		};
 
 		// Custom onRemove handler for the parent cache
@@ -154,27 +186,68 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 	 *   current value or `null`
 	 */
 	public getIfPresent(key: K): V | null {
+		const data = this[DATA];
 		const node = this[PARENT].getIfPresent(key);
-		if(node) {
-			if(node.isExpired()) {
-				// Check if the node is expired and return null if so
-				return null;
-			}
+		const value = this.unwrapNode(key, node);
+		data.metrics.record(value !== null);
+		return value;
+	}
 
-			// Reschedule if we have a maximum age between reads
-			const data = this[DATA];
-			if(data.maxNoReadAge) {
-				const age = data.maxNoReadAge(key, node.value as V);
-				if(! data.timerWheel.schedule(node as TimerNode<K, V>, age)) {
-					// Age was not accepted by wheel, expire it directly
-					this.delete(key);
-				}
-			}
+	/**
+	 * Get cached value or load it if not currently cached. Updates the usage
+	 * of the key.
+	 *
+	 * @param key -
+	 *   key to get
+	 * @param loader -
+	 *   optional loader to use for loading the object
+	 * @returns
+	 *   promise that resolves to the loaded value
+	 */
+	public get<R extends V | undefined | null>(key: K, loader?: Loader<K, V>): Promise<LoaderResult<R>> {
+		const data = this[DATA];
+		const nodePromise = this[PARENT].get(key, resolveWrappedLoader(data.timerWheel, data.loader, loader));
+		return nodePromise.then(node => {
+			const value = this.unwrapNode(key, node);
+			data.metrics.record(value !== null);
+			return value as LoaderResult<R>;
+		});
+	}
 
-			return node.value;
+	/**
+	 * Unwraps an expirable node as a value, handling expiration logic.
+	 *
+	 * @param key -
+	 *   the key associated to the node
+	 *
+	 * @param node -
+	 *   the node to unwrap
+	 *
+	 * @returns
+	 *   the unwrapped value or null
+	 */
+	protected unwrapNode(key: K, node: Expirable<V> | null): V | null {
+		const data = this[DATA];
+
+		if(! node) {
+			return null;
 		}
 
-		return null;
+		if(node.isExpired()) {
+			// Check if the node is expired and return null if so
+			return null;
+		}
+
+		// Reschedule if we have a maximum age between reads
+		if(data.maxNoReadAge) {
+			const age = data.maxNoReadAge(key, node.value as V);
+			if(! data.timerWheel.schedule(node as TimerNode<K, V>, age)) {
+				// Age was not accepted by wheel, expire it directly
+				this.delete(key);
+			}
+		}
+
+		return node.value;
 	}
 
 	/**
@@ -263,7 +336,7 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 	 *   metrics if available via the parent cache
 	 */
 	public get metrics(): Metrics {
-		return this[PARENT].metrics;
+		return this[DATA].metrics;
 	}
 
 	private [MAINTENANCE]() {
@@ -288,4 +361,66 @@ export class ExpirationCache<K extends KeyType, V> extends AbstractCache<K, V> i
 			data.removalListener(key, value, reason);
 		}
 	}
+}
+
+/**
+ * Wraps a loader so it returns expirable nodes.
+ *
+ * @param timerWheel -
+ *   the timerWheel
+ *
+ * @param loader -
+ *   the loader to wrap
+ *
+ * @returns
+ *   a wrapped loader that returns Expirable nodes
+ */
+function wrapLoader<K extends KeyType, V>(timerWheel: TimerWheel<K, V>, loader: Loader<K, V>): Loader<K, Expirable<V>> {
+	return key => {
+		const maybePromise = loader(key);
+		if(maybePromise === null || maybePromise === undefined) {
+			return null;
+		}
+		if(! isPromise(maybePromise)) {
+			return timerWheel.node(key, maybePromise);
+		}
+		return maybePromise.then(value => {
+			if(value === null || value === undefined) {
+				return null;
+			}
+			return timerWheel.node(key, value);
+		});
+	};
+}
+
+/**
+ * Given two loaders, returns the most relevant one, or throws an exception if the provded loaders are invalid.
+ *
+ * @param timerWheel -
+ *   the timerWheel
+ *
+ * @param defaultLoader -
+ *   the primary loader
+ *
+ * @param loader -
+ *   the specific loader that can override the default one
+ *
+ * @returns
+ *   resolved loader, or throws an exception
+ */
+export function resolveWrappedLoader<K extends KeyType, V>(
+	timerWheel: TimerWheel<K, V>,
+	defaultLoader: Loader<K, Expirable<V>> | undefined | null,
+	loader: Loader<K, V> | undefined | null,
+) : Loader<K, Expirable<V>> {
+	if(defaultLoader !== undefined && defaultLoader !== null) {
+		return defaultLoader;
+	}
+	if(loader !== undefined && loader !== null) {
+		if(typeof loader !== 'function') {
+			throw new Error('If loader is used it must be a function that returns a value or a Promise');
+		}
+		return wrapLoader(timerWheel, loader);
+	}
+	throw new Error('No loader is provided');
 }

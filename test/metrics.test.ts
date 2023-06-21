@@ -1,6 +1,7 @@
+import { newCache as newCacheImpl } from '../src/builder';
+import { StandardMetrics } from '../src/cache';
 import { BoundlessCache } from '../src/cache/boundless';
 import { KeyType } from '../src/cache/KeyType';
-import { MetricsCache } from '../src/cache/metrics/index';
 import { RemovalReason } from '../src/cache/RemovalReason';
 
 import { RemovalHelper } from './removal-helper';
@@ -9,9 +10,7 @@ import { RemovalHelper } from './removal-helper';
  *
  */
 function newCache<K extends KeyType, V>() {
-	return new MetricsCache({
-		parent: new BoundlessCache<K, V>({})
-	});
+	return newCacheImpl<K, V>().metrics().build();
 }
 
 describe('MetricsCache', function() {
@@ -59,6 +58,25 @@ describe('MetricsCache', function() {
 		expect(cache.metrics.hits).toEqual(0);
 		expect(cache.metrics.misses).toEqual(0);
 		expect(cache.metrics.hitRate).toEqual(1);
+	});
+
+	it('Records stats properly', function() {
+		const metrics = new StandardMetrics();
+
+		metrics.count(1, 1);
+		expect(metrics).toMatchObject({ hits: 1, misses: 1 });
+
+		metrics.hit();
+		expect(metrics).toMatchObject({ hits: 2, misses: 1 });
+
+		metrics.hit(2);
+		expect(metrics).toMatchObject({ hits: 4, misses: 1 });
+
+		metrics.record(false);
+		expect(metrics).toMatchObject({ hits: 4, misses: 2 });
+
+		metrics.miss(-1);
+		expect(metrics).toMatchObject({ hits: 4, misses: 1 });
 	});
 
 	describe('Removal listeners', function() {

@@ -4,4 +4,4 @@ import { KeyType } from '../KeyType';
  * Function used to load a value in the cache. Can return a promise or a
  * value directly.
  */
-export type Loader<K extends KeyType, V> = (key: K) => Promise<V> | V;
+export type Loader<K extends KeyType, V> = (key: K) => Promise<V | null | undefined> | V | null | undefined;
